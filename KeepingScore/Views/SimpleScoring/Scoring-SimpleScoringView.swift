@@ -1,31 +1,40 @@
 import SwiftUI
 
+// ScoringView
+// This view handles score input and tracking for multiple players over a set number of rounds.
 struct ScoringView: View {
+    // Player list and round settings
     @State private var players: [String]
     var totalRounds: Int
 
+    // Score tracking
     @State private var scores: [String: Int] = [:]
     @State private var enteredPoints: [String: String] = [:]
     @State private var currentRound: Int = 1
     @State private var showCompletionAlert = false
     @State private var lastRoundSubmitted = false
 
+    // Error handling
     @State private var showErrorAlert: Bool = false
     @State private var errorMessage: String = ""
 
+    // Score editing
     @State private var isEditingScores: Bool = false
     @State private var updatedScores: [String: String] = [:]
 
-    // Swipe actions
+    // Player renaming
     @State private var showRenameAlert = false
     @State private var newName = ""
     @State private var indexToRename: Int? = nil
 
+    // Player deletion
     @State private var showDeleteConfirmation = false
     @State private var indexToDelete: Int? = nil
 
+    // For dismissing the view
     @Environment(\.presentationMode) var presentationMode
 
+    // Custom initializer to set up initial state
     init(players: [String], totalRounds: Int) {
         self._players = State(initialValue: players)
         self.totalRounds = totalRounds
@@ -38,7 +47,8 @@ struct ScoringView: View {
         GeometryReader { geo in
             ScrollView {
                 VStack(spacing: 24) {
-                    // Title
+                    
+                    // Round Title
                     Text(totalRounds == -1 ? "Round \(currentRound)" : "Round \(currentRound) of \(totalRounds)")
                         .font(.system(size: geo.size.width * 0.070, weight: .bold))
                         .padding(.top)
@@ -49,6 +59,8 @@ struct ScoringView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(player)
                                     .font(.headline)
+
+                                // Input field for score entry
                                 TextField("Enter points", text: Binding(
                                     get: { enteredPoints[player, default: "" ] },
                                     set: { enteredPoints[player] = $0 }
@@ -79,7 +91,7 @@ struct ScoringView: View {
                     .padding(.horizontal)
                     .disabled(totalRounds != -1 && lastRoundSubmitted)
 
-                    // Scoreboard
+                    // Scoreboard Section
                     VStack(spacing: 16) {
                         HStack {
                             Text("Scoreboard")
@@ -96,6 +108,7 @@ struct ScoringView: View {
                         }
                         .padding(.horizontal)
 
+                        // List of players with scores and swipe actions
                         List {
                             ForEach(players.indices, id: \.self) { index in
                                 let player = players[index]
@@ -105,6 +118,7 @@ struct ScoringView: View {
                                         .frame(width: geo.size.width > 500 ? 200 : 120, alignment: .leading)
                                     Spacer()
                                     if isEditingScores {
+                                        // Score editing field
                                         TextField("Score", text: Binding(
                                             get: { updatedScores[player, default: "0"] },
                                             set: { updatedScores[player] = $0 }
@@ -117,6 +131,7 @@ struct ScoringView: View {
                                             .fontWeight(.bold)
                                     }
                                 }
+                                // Swipe to rename or delete
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
                                         indexToDelete = index
@@ -147,7 +162,8 @@ struct ScoringView: View {
                 .frame(width: geo.size.width)
             }
         }
-        //.navigationTitle("Scoring")
+
+        // Rename Alert
         .alert("Rename Player", isPresented: $showRenameAlert, actions: {
             TextField("New name", text: $newName)
             Button("Save") {
@@ -155,7 +171,7 @@ struct ScoringView: View {
                     let oldName = players[index]
                     players[index] = newName
 
-                    // Migrate score values
+                    // Migrate player data to new name
                     scores[newName] = scores[oldName]
                     scores.removeValue(forKey: oldName)
 
@@ -170,6 +186,8 @@ struct ScoringView: View {
         }, message: {
             Text("Enter a new name for this player.")
         })
+
+        // Delete Alert
         .alert("Delete Player?", isPresented: $showDeleteConfirmation, actions: {
             Button("Delete", role: .destructive) {
                 if let index = indexToDelete {
@@ -186,8 +204,8 @@ struct ScoringView: View {
         })
     }
 
-    // MARK: Logic
-
+    // submitRound
+    // Handles score submission for the current round, including input validation and round progression.
     private func submitRound() {
         let hasValidInput = players.contains {
             guard let input = enteredPoints[$0], let points = Int(input), points != 0 else { return false }
@@ -200,6 +218,7 @@ struct ScoringView: View {
             return
         }
 
+        // Add entered points to each player's total
         for player in players {
             if let points = Int(enteredPoints[player] ?? "0") {
                 scores[player, default: 0] += points
@@ -207,6 +226,7 @@ struct ScoringView: View {
             enteredPoints[player] = ""
         }
 
+        // If it's the last round, show completion alert
         if totalRounds != -1 && currentRound == totalRounds {
             lastRoundSubmitted = true
             showCompletionAlert = true
@@ -215,14 +235,18 @@ struct ScoringView: View {
         }
     }
 
+    // toggleEditMode
+    // Switch between score editing mode and normal view. Updates scores when exiting edit mode.
     private func toggleEditMode() {
         if isEditingScores {
+            // Save edited scores
             for player in players {
                 if let newScore = Int(updatedScores[player] ?? "") {
                     scores[player] = newScore
                 }
             }
         } else {
+            // Populate editable fields with current scores
             updatedScores = Dictionary(uniqueKeysWithValues: players.map {
                 ($0, "\(scores[$0, default: 0])")
             })

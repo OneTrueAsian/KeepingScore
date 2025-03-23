@@ -1,17 +1,25 @@
 import SwiftUI
 
+// ScoreInputAndScoreboardView
+/// Allows players to input their round scores (bids, tricks, bonuses),
+/// edit scores directly, rename or delete players, and submit scores per round.
+/// Displays a running scoreboard and navigates to the leaderboard when the game ends.
 struct ScoreInputAndScoreboardView: View {
     @EnvironmentObject var gameManager: GameManager
+
+    // Input States
     @State private var bids: [String] = []
     @State private var tricks: [String] = []
     @State private var bonuses: [String] = []
     @State private var updatedScores: [String] = []
+
+    // UI States
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
     @State private var isEditing: Bool = false
     @State private var navigateToLeaderboard = false
 
-    // Swipe actions
+    // Swipe Actions
     @State private var playerToRenameIndex: Int? = nil
     @State private var newName: String = ""
     @State private var showRenameAlert: Bool = false
@@ -23,7 +31,8 @@ struct ScoreInputAndScoreboardView: View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(spacing: 16) {
-                    //  Round Header
+
+                    // Round Header & Reset
                     HStack {
                         Spacer()
                         Text("Round \(gameManager.currentRound)")
@@ -32,7 +41,6 @@ struct ScoreInputAndScoreboardView: View {
                             .foregroundColor(.blue)
                             .padding(.leading, 16)
                         Spacer()
-
                         Button(action: resetGame) {
                             Image(systemName: "arrow.clockwise")
                                 .font(.system(size: geometry.size.width * 0.06))
@@ -41,7 +49,7 @@ struct ScoreInputAndScoreboardView: View {
                         }
                     }
 
-                    //  Input Fields for Bids, Tricks, Bonus
+                    // Input Fields Per Player
                     ForEach(0..<gameManager.players.count, id: \.self) { index in
                         VStack(spacing: 8) {
                             Text(gameManager.players[index].name)
@@ -52,10 +60,8 @@ struct ScoreInputAndScoreboardView: View {
                             HStack(spacing: 12) {
                                 TextField("Bid", text: binding(for: $bids, index: index))
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
-
                                 TextField("Tricks", text: binding(for: $tricks, index: index))
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
-
                                 TextField("Bonus", text: binding(for: $bonuses, index: index))
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
                             }
@@ -64,11 +70,10 @@ struct ScoreInputAndScoreboardView: View {
 
                     Divider().padding(.vertical, 8)
 
-                    //  Scoreboard with swipe
+                    // Scoreboard List with Edit/Swipe
                     VStack {
                         Text("Scoreboard")
-                            .font(.title2)
-                            .bold()
+                            .font(.title2).bold()
                             .padding(.top)
 
                         List {
@@ -89,6 +94,7 @@ struct ScoreInputAndScoreboardView: View {
                                         Text("\(gameManager.players[index].totalScore)")
                                     }
                                 }
+                                // Swipe Actions
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
                                         indexToDelete = index
@@ -110,8 +116,9 @@ struct ScoreInputAndScoreboardView: View {
                     }
                     .padding()
 
-                    //  Edit/Submit Score Buttons
+                    // Score Actions (Edit & Submit)
                     HStack(spacing: 16) {
+                        // Toggle edit mode for scores
                         Button(action: toggleEditMode) {
                             Text(isEditing ? "Done Editing" : "Edit Score")
                                 .frame(maxWidth: .infinity)
@@ -121,6 +128,7 @@ struct ScoreInputAndScoreboardView: View {
                                 .cornerRadius(8)
                         }
 
+                        // Submit scores for current round
                         Button(action: submitScores) {
                             Text("Submit Scores")
                                 .frame(maxWidth: .infinity)
@@ -132,14 +140,18 @@ struct ScoreInputAndScoreboardView: View {
                         .disabled(gameManager.currentRound > gameManager.maxRounds)
                     }
 
+                    // Navigation
                     .navigationDestination(isPresented: $navigateToLeaderboard) {
                         LeaderboardView().environmentObject(gameManager)
                     }
                 }
                 .padding()
+
+                // Alerts
                 .alert(isPresented: $showError) {
                     Alert(title: Text("Error"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
                 }
+
                 .alert("Rename Player", isPresented: $showRenameAlert, actions: {
                     TextField("New name", text: $newName)
                     Button("Save") {
@@ -151,6 +163,7 @@ struct ScoreInputAndScoreboardView: View {
                 }, message: {
                     Text("Enter a new name for this player.")
                 })
+
                 .alert("Delete Player?", isPresented: $showDeleteConfirmation, actions: {
                     Button("Delete", role: .destructive) {
                         if let index = indexToDelete {
@@ -165,6 +178,8 @@ struct ScoreInputAndScoreboardView: View {
                 }, message: {
                     Text("Are you sure you want to remove this player and their score?")
                 })
+
+                // Initialize input arrays when view appears
                 .onAppear {
                     if bids.isEmpty {
                         initializeEntries()
@@ -175,10 +190,11 @@ struct ScoreInputAndScoreboardView: View {
         }
     }
 
-    // MARK: - Submit Scores Logic
+    // Submit Score Logic
     private func submitScores() {
         let totalTricks = tricks.compactMap { Int($0) }.reduce(0, +)
 
+        // Validate tricks match round number
         if totalTricks > gameManager.currentRound {
             showError = true
             errorMessage = "Total tricks (\(totalTricks)) cannot exceed the round number (\(gameManager.currentRound))."
@@ -188,6 +204,7 @@ struct ScoreInputAndScoreboardView: View {
         var scores = [Int]()
         var bonusValues = [Int]()
 
+        // Validate and calculate scores
         for i in 0..<gameManager.players.count {
             guard let bid = Int(bids[i]), let trick = Int(tricks[i]) else {
                 showError = true
@@ -202,11 +219,13 @@ struct ScoreInputAndScoreboardView: View {
         gameManager.addRoundScores(scores: scores, bonuses: bonusValues)
         resetEntries()
 
+        // Navigate to leaderboard if game is complete
         if gameManager.currentRound > gameManager.maxRounds {
             navigateToLeaderboard = true
         }
     }
 
+    // Game State Helpers
     private func resetGame() {
         gameManager.resetGame()
         resetEntries()
@@ -246,6 +265,8 @@ struct ScoreInputAndScoreboardView: View {
         showRenameAlert = true
     }
 
+    // Binding Helper
+    /// Ensures safe binding access for dynamic array fields
     private func binding(for array: Binding<[String]>, index: Int) -> Binding<String> {
         return Binding(
             get: { array.wrappedValue.indices.contains(index) ? array.wrappedValue[index] : "" },

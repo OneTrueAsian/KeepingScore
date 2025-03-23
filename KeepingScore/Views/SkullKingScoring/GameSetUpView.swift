@@ -1,8 +1,11 @@
 import SwiftUI
 
+// GameSetupView
+/// View where players are added before starting the Skull King game.
+/// Supports between 2 to 8 players and validates input before launching the game.
 struct GameSetupView: View {
-    @EnvironmentObject var gameManager: GameManager
-    @State private var playerNames: [String] = ["", ""]
+    @EnvironmentObject var gameManager: GameManager // Shared game state
+    @State private var playerNames: [String] = ["", ""] // At least 2 player fields to start
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
 
@@ -10,12 +13,13 @@ struct GameSetupView: View {
         GeometryReader { geo in
             ScrollView {
                 VStack(spacing: 24) {
-                    // MARK: Title
+                    
+                    // Title
                     Text("Ahoy! Enter Ye Crew")
                         .font(.custom("Lodeh Regular", size: geo.size.width < 500 ? 28 : 36))
                         .padding(.top)
 
-                    // MARK: Player Inputs
+                    // Player Inputs
                     VStack(spacing: 12) {
                         ForEach(0..<playerNames.count, id: \.self) { index in
                             TextField("Player \(index + 1)", text: $playerNames[index])
@@ -29,8 +33,9 @@ struct GameSetupView: View {
                     .cornerRadius(12)
                     .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
 
-                    // MARK: Add/Remove Player Buttons
+                    // Add / Remove Player Buttons
                     HStack(spacing: 16) {
+                        // Add player if under 8 total
                         Button(action: addPlayer) {
                             Text("Add Player")
                                 .frame(maxWidth: .infinity)
@@ -41,6 +46,7 @@ struct GameSetupView: View {
                         }
                         .disabled(playerNames.count >= 8)
 
+                        // Remove player if more than 2 total
                         Button(action: removePlayer) {
                             Text("Remove Player")
                                 .frame(maxWidth: .infinity)
@@ -52,7 +58,7 @@ struct GameSetupView: View {
                         .disabled(playerNames.count <= 2)
                     }
 
-                    // MARK: Start Game Button
+                    // Start Game Button
                     Button(action: validateAndStartGame) {
                         Text("Start Game")
                             .frame(maxWidth: .infinity)
@@ -61,6 +67,7 @@ struct GameSetupView: View {
                             .foregroundColor(.white)
                             .cornerRadius(8)
                     }
+                    // Navigates when gameManager.isGameStarted becomes true
                     .navigationDestination(isPresented: $gameManager.isGameStarted) {
                         ScoreInputAndScoreboardView()
                             .environmentObject(gameManager)
@@ -68,11 +75,13 @@ struct GameSetupView: View {
 
                     Spacer(minLength: 40)
                 }
-                .frame(maxWidth: 600)
+                .frame(maxWidth: 600) // Limits width for larger devices like iPads
                 .padding()
                 .frame(width: geo.size.width)
             }
         }
+
+        // Error Alert
         .alert(isPresented: $showError) {
             Alert(
                 title: Text("Error"),
@@ -83,7 +92,9 @@ struct GameSetupView: View {
         .navigationTitle("Game Setup")
     }
 
-    // MARK: Logic
+    // Logic Functions
+
+    /// Adds a new blank player slot if the count is under 8
     private func addPlayer() {
         if playerNames.count < 8 {
             playerNames.append("")
@@ -91,6 +102,7 @@ struct GameSetupView: View {
         }
     }
 
+    /// Removes the last player slot if the count is above 2
     private func removePlayer() {
         if playerNames.count > 2 {
             playerNames.removeLast()
@@ -98,6 +110,7 @@ struct GameSetupView: View {
         }
     }
 
+    /// Validates that all player fields are filled, then starts the game
     private func validateAndStartGame() {
         if playerNames.contains(where: { $0.trimmingCharacters(in: .whitespaces).isEmpty }) {
             errorMessage = "Player names cannot be empty. Please fill in all player names."
@@ -105,6 +118,7 @@ struct GameSetupView: View {
             return
         }
 
+        // Filter out empty names and convert to Player objects
         gameManager.players = playerNames
             .filter { !$0.isEmpty }
             .map { Player(name: $0) }

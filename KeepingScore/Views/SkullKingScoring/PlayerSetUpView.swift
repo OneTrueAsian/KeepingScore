@@ -1,28 +1,40 @@
 import SwiftUI
 
-// Refactored PlayerSetupView to integrate with KeepScore without changing the UI
+// PlayerSetupView
+/// A simplified player setup screen using a Stepper to select number of players (2–8),
+/// and TextFields to enter their names. Once submitted, it initializes the game state.
 struct PlayerSetupView: View {
-    @EnvironmentObject var gameManager: GameManager // Ensuring state management integration
+    @EnvironmentObject var gameManager: GameManager // Shared game state across views
+    
+    // Stores names for up to 8 players; unused names are ignored
     @State private var playerNames: [String] = Array(repeating: "", count: 8)
+    
+    // Number of players selected via Stepper (min 2, max 8)
     @State private var playerCount: Int = 2
     
     var body: some View {
         VStack {
+            
+            // Title
             Text("Player Setup")
                 .font(.largeTitle)
                 .padding()
             
+            // Stepper for Player Count
             Stepper(value: $playerCount, in: 2...8) {
                 Text("Number of Players: \(playerCount)")
             }
             .padding()
             
-            ForEach(0..<playerCount, id: \..self) { index in
+            // Player Name Inputs
+            // Shows one text field per active player slot
+            ForEach(0..<playerCount, id: \.self) { index in
                 TextField("Enter Player \(index + 1) Name", text: $playerNames[index])
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
             }
             
+            // Start Game Button
             Button(action: startGame) {
                 Text("Start Game")
                     .frame(maxWidth: .infinity)
@@ -35,12 +47,14 @@ struct PlayerSetupView: View {
         }
     }
     
+    // Game Initialization Logic
+    /// Filters out empty player names, creates Player objects, and starts the game
     private func startGame() {
-        // Ensure player names are properly assigned in KeepScore’s state
         gameManager.players = playerNames
-            .prefix(playerCount)
-            .filter { !$0.isEmpty } // Removes empty player names
-            .map { Player(name: $0) }
+            .prefix(playerCount)             // Only use fields up to selected count
+            .filter { !$0.isEmpty }          // Remove any empty names
+            .map { Player(name: $0) }        // Convert to Player objects
+        
         gameManager.isGameStarted = true
         print("Game started with players: \(gameManager.players.map { $0.name })")
     }

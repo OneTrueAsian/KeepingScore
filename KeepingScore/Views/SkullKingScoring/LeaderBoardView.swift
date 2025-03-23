@@ -1,7 +1,13 @@
 import SwiftUI
 
+// LeaderboardView
+/// Displays the final scores at the end of the game.
+/// Players are ranked from highest to lowest score.
+/// Options provided to go back to setup or restart the game.
 struct LeaderboardView: View {
     @EnvironmentObject var gameManager: GameManager
+
+    // Navigation triggers
     @State private var navigateBackToPlayerSetup = false
     @State private var navigateToScoreboard = false
 
@@ -10,12 +16,13 @@ struct LeaderboardView: View {
             GeometryReader { geo in
                 ScrollView {
                     VStack(spacing: 24) {
-                        // MARK: Title
+
+                        // Title
                         Text("Leaderboard")
                             .font(.system(size: geo.size.width < 500 ? 28 : 36, weight: .bold))
                             .padding(.top)
 
-                        // MARK: Leaderboard List
+                        // Leaderboard List
                         let sortedPlayers = gameManager.players.sorted { $0.totalScore > $1.totalScore }
 
                         VStack(spacing: 8) {
@@ -35,8 +42,9 @@ struct LeaderboardView: View {
                         }
                         .padding(.horizontal)
 
-                        // MARK: Buttons
+                        // Action Buttons
                         HStack(spacing: 16) {
+                            // Done button returns to player setup screen
                             Button("Done") {
                                 gameManager.isGameStarted = false
                                 navigateBackToPlayerSetup = true
@@ -47,6 +55,7 @@ struct LeaderboardView: View {
                             .foregroundColor(.white)
                             .cornerRadius(8)
 
+                            // Restart button keeps players but resets scores/round
                             Button("Restart") {
                                 gameManager.resetGame()
                                 navigateToScoreboard = true
@@ -68,9 +77,14 @@ struct LeaderboardView: View {
                 }
             }
             .navigationBarHidden(true)
+
+            // Navigation
+            // Navigate to player setup
             .navigationDestination(isPresented: $navigateBackToPlayerSetup) {
                 GameSetupView().environmentObject(gameManager)
             }
+
+            // Navigate back into the scoreboard to continue playing
             .navigationDestination(isPresented: $navigateToScoreboard) {
                 ScoreInputAndScoreboardView().environmentObject(gameManager)
             }
