@@ -8,6 +8,7 @@ struct KeepingScoreApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(gameManager) // Provide GameManager to all child views
+                .tint(.blue) // Set app-wide tint color
         }
     }
 }
