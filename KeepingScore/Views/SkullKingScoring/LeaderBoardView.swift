@@ -76,7 +76,7 @@ struct LeaderboardView: View {
                     .frame(width: geo.size.width)
                 }
             }
-            .navigationBarHidden(true)
+            .navigationBarBackButtonHidden(false)
 
             // Navigation
             // Navigate to player setup
