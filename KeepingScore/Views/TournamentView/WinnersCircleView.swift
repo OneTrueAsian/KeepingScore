@@ -3,6 +3,8 @@ import SwiftUI
 struct WinnersCircleView: View {
     let topTeams: [RankedTeam]
 
+    @State private var navigateToMenu = false
+
     var body: some View {
         VStack(spacing: 24) {
             Text("🏆 Winners Circle")
@@ -34,16 +36,35 @@ struct WinnersCircleView: View {
             Spacer()
 
             Button("Save Tournament") {
-                // Placeholder: Save to file or storage (Phase 6)
-                print("Tournament saved.")
+                let formatter = DateFormatter()
+                formatter.dateFormat = "yyyy-MM-dd"
+                let today = formatter.string(from: Date())
+                let result = TournamentResult(title: "Results", date: today, teams: topTeams)
+                TournamentResult.save(result)
             }
-            .buttonStyle(.borderedProminent)
-            .padding(.bottom)
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color.green)
+            .foregroundColor(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+
+            Button("Return to Menu") {
+                navigateToMenu = true
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
         }
+        .padding(.bottom)
         .navigationTitle("Results")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(false)
-        .tint(.black)
+        .tint(.blue)
+        .navigationDestination(isPresented: $navigateToMenu) {
+            TournamentView()
+        }
     }
 
     func placeEmoji(for placement: Int) -> String {
@@ -54,12 +75,4 @@ struct WinnersCircleView: View {
         default: return ""
         }
     }
-}
-
-#Preview {
-    WinnersCircleView(topTeams: [
-        RankedTeam(name: "Team Alpha", score: 12, placement: 1),
-        RankedTeam(name: "Team Bravo", score: 9, placement: 2),
-        RankedTeam(name: "Team Charlie", score: 6, placement: 3)
-    ])
 }
