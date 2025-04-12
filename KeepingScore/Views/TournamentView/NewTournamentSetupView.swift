@@ -1,19 +1,20 @@
 import SwiftUI
 
 struct NewTournamentSetupView: View {
-    @State private var tournamentTitle: String = ""
-    @State private var numberOfTeamsText: String = ""
-    @State private var teamNames: [String] = []
-    @State private var showTeamFields: Bool = false
-    @State private var navigateToBracket = false
-    @State private var autoGenerateMatchups: Bool = true
-    @State private var showInfo = false
 
     @FocusState private var focusedField: Int?
 
     var numberOfTeams: Int {
         Int(numberOfTeamsText) ?? 0
     }
+
+    @State private var tournamentTitle: String = ""
+    @State private var numberOfTeamsText: String = ""
+    @State private var autoGenerateMatchups: Bool = false
+    @State private var showInfo: Bool = false
+    @State private var showTeamFields: Bool = false
+    @State private var teamNames: [String] = []
+    @State private var navigateToBracket: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -85,22 +86,26 @@ struct NewTournamentSetupView: View {
                         dateFormatter.dateStyle = .medium
                         dateFormatter.timeStyle = .none
                         
+                        // Break down complex expression
+                        let rankedTeams = teamNames.map { name in
+                            RankedTeam(name: name, score: 0, placement: 0)
+                        }
+                        
                         let tournament = TournamentResult(
                             title: tournamentTitle,
                             date: dateFormatter.string(from: Date()),
-                            teams: teamNames.map { RankedTeam(name: $0, score: 0, placement: 0) }
+                            winners: [],
+                            allPlayers: rankedTeams,
+                            roundHistory: []
                         )
                         
-                        TournamentResult.save(tournament)
-                        navigateToBracket = true
-                    }
                     .disabled(!isFormValid())
-                    .frame(maxWidth: .infinity)
+                    
                     .padding()
                     .background(isFormValid() ? Color.blue : Color.gray.opacity(0.3))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.white)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .padding(.horizontal)
+                    
                 }
 
                 .navigationDestination(isPresented: $navigateToBracket) {
@@ -137,6 +142,4 @@ struct NewTournamentSetupView: View {
     }
 }
 
-#Preview {
-    NewTournamentSetupView()
 }

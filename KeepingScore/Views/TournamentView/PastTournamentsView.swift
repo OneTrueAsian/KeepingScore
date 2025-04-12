@@ -32,7 +32,7 @@ struct PastTournamentsView: View {
                             VStack(alignment: .leading) {
                                 Text("🏆 \(tournament.title) – \(tournament.date)")
                                     .font(.headline)
-                                Text("\(tournament.teams.count) teams")
+                                Text("\(tournament.allPlayers.count) players")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }

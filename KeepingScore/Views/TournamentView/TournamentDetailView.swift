@@ -18,14 +18,14 @@ struct TournamentDetailView: View {
                 .font(.title2)
                 .padding(.bottom, 4)
 
-            List(tournament.teams.sorted(by: { $0.placement < $1.placement })) { team in
+            List(tournament.allPlayers.sorted(by: { $0.placement < $1.placement })) { player in
                 HStack {
-                    Text("\(team.placement).")
+                    Text("\(player.placement).")
                         .bold()
                     VStack(alignment: .leading) {
-                        Text(team.name)
+                        Text(player.name)
                             .font(.headline)
-                        Text("Score: \(team.score)")
+                        Text("Score: \(player.score)")
                             .font(.subheadline)
                             .foregroundColor(.gray)
                     }

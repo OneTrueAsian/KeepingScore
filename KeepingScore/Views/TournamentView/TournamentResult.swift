@@ -4,13 +4,13 @@ struct TournamentResult: Codable, Identifiable {
     var id = UUID()
     var title: String
     var date: String
-    var teams: [RankedTeam]
-    var allPlayers: [RankedTeam]?
+    var winners: [RankedTeam]
+    var allPlayers: [RankedTeam]
     var roundHistory: [Int] = []
     
     enum CodingKeys: String, CodingKey {
-            case id, title, date, teams
-        }
+        case id, title, date, winners, allPlayers, roundHistory
+    }
     
     static func save(_ result: TournamentResult) {
         let encoder = JSONEncoder()

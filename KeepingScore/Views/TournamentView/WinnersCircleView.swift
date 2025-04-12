@@ -10,26 +10,15 @@ struct WinnersCircleView: View {
     
     var body: some View {
         VStack(spacing: 24) {
-            Button("Save Tournament") {
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateStyle = .medium
-                dateFormatter.timeStyle = .none
-                
-                let tournament = TournamentResult(
-                    title: "Tournament \(Date())",
-                    date: dateFormatter.string(from: Date()),
-                    teams: topTeams,
-                    allPlayers: topTeams // TODO: Replace with full player list
-                )
-                
-                TournamentResult.save(tournament)
-                dismiss()
-            }
-            .buttonStyle(.borderedProminent)
+            Text("Results")
+                .font(.title)
+                .bold()
+                .padding(.top)
+            
+            
             Text("🏆 Winners Circle")
                 .font(.largeTitle)
                 .bold()
-                .padding(.top)
 
             ForEach(topTeams.sorted(by: { $0.placement < $1.placement })) { team in
                 HStack {
@@ -54,14 +43,42 @@ struct WinnersCircleView: View {
 
             Spacer()
 
-            Button("Return to Menu") {
-                navigateToMenu = true
+            HStack(spacing: 20) {
+                Button(action: {
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateStyle = .medium
+                    dateFormatter.timeStyle = .none
+                    
+                    // Assign proper placements to all players
+                    let allRankedPlayers = allTeams.map { player in
+                        let placement = topTeams.firstIndex { $0.id == player.id } ?? allTeams.count
+                        return RankedTeam(name: player.name, score: player.score, placement: placement + 1)
+                    }
+                    
+                    let tournament = TournamentResult(
+                        title: "Tournament \(dateFormatter.string(from: Date()))",
+                        date: dateFormatter.string(from: Date()),
+                        winners: topTeams,
+                        allPlayers: allRankedPlayers,
+                        roundHistory: []
+                    )
+                    TournamentResult.save(tournament)
+                }) {
+                    Text("Save Tournament")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
+                
+                Button("Return to Menu") {
+                    navigateToMenu = true
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.blue)
             }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .frame(height: 50)
         }
         .padding(.bottom)
         .navigationTitle("Results")

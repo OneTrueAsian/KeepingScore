@@ -71,7 +71,10 @@ struct TournamentBracketView: View {
         }
         .navigationTitle("Bracket")
         .navigationDestination(isPresented: $navigateToWinners) {
-            WinnersCircleView(topTeams: topTeams, allTeams: topTeams + eliminatedTeams.map { RankedTeam(name: $0.name, score: $0.score, placement: 0) })
+        let rankedTeams: [RankedTeam] = teams.enumerated().map { index, name in
+            RankedTeam(name: name, score: 0, placement: index + 1)
+        }
+            WinnersCircleView(topTeams: topTeams, allTeams: rankedTeams)
         }
     }
 
@@ -129,7 +132,7 @@ struct TournamentBracketView: View {
         var advancingTeams: [String] = []
 
         for match in matches {
-            guard match.team2 != nil else {
+            guard let team2 = match.team2 else {
                 advancingTeams.append(match.team1)
                 continue
             }
@@ -191,6 +194,8 @@ struct TournamentBracketView: View {
     }
 }
 
-#Preview {
-    TournamentBracketView(teams: ["Team A", "Team B", "Team C", "Team D"], autoGenerate: true)
+struct TournamentBracketView_Previews: PreviewProvider {
+    static var previews: some View {
+        TournamentBracketView(teams: [], autoGenerate: true)
+    }
 }
