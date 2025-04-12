@@ -81,6 +81,17 @@ struct NewTournamentSetupView: View {
                 
                 .safeAreaInset(edge: .bottom) {
                     Button("Continue") {
+                        let dateFormatter = DateFormatter()
+                        dateFormatter.dateStyle = .medium
+                        dateFormatter.timeStyle = .none
+                        
+                        let tournament = TournamentResult(
+                            title: tournamentTitle,
+                            date: dateFormatter.string(from: Date()),
+                            teams: teamNames.map { RankedTeam(name: $0, score: 0, placement: 0) }
+                        )
+                        
+                        TournamentResult.save(tournament)
                         navigateToBracket = true
                     }
                     .disabled(!isFormValid())

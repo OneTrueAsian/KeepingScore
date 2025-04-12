@@ -13,7 +13,11 @@ struct TournamentBracketView: View {
     var autoGenerate: Bool
 
     @State private var matches: [Match] = []
-    @State private var currentRound: Int = 1
+    @State private var currentRound: Int = 1 {
+        didSet {
+            print("Current round updated to: \(currentRound)")
+        }
+    }
     @State private var eliminatedTeams: [(name: String, score: Int)] = []
     @State private var navigateToWinners = false
     @State private var topTeams: [RankedTeam] = []
