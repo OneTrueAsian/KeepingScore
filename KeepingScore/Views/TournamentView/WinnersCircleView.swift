@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WinnersCircleView: View {
     let topTeams: [RankedTeam]
+    let allTeams: [RankedTeam]
 
     @State private var navigateToMenu = false
 
@@ -52,19 +53,6 @@ struct WinnersCircleView: View {
             }
 
             Spacer()
-
-            Button("Save Tournament") {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
-                let today = formatter.string(from: Date())
-                let result = TournamentResult(title: "Results", date: today, teams: topTeams)
-                TournamentResult.save(result)
-            }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color.green)
-            .foregroundColor(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
 
             Button("Return to Menu") {
                 navigateToMenu = true

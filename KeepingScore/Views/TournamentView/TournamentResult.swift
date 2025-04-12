@@ -63,7 +63,7 @@ struct TournamentResult: Codable, Identifiable {
 
             return tournamentFiles.compactMap { fileURL in
                 guard let data = try? Data(contentsOf: fileURL),
-                      var result = try? JSONDecoder().decode(TournamentResult.self, from: data) else {
+                      let result = try? JSONDecoder().decode(TournamentResult.self, from: data) else {
                     return nil
                 }
                 return result

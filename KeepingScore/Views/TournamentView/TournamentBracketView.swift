@@ -71,7 +71,7 @@ struct TournamentBracketView: View {
         }
         .navigationTitle("Bracket")
         .navigationDestination(isPresented: $navigateToWinners) {
-            WinnersCircleView(topTeams: topTeams)
+            WinnersCircleView(topTeams: topTeams, allTeams: topTeams + eliminatedTeams.map { RankedTeam(name: $0.name, score: $0.score, placement: 0) })
         }
     }
 
@@ -129,7 +129,7 @@ struct TournamentBracketView: View {
         var advancingTeams: [String] = []
 
         for match in matches {
-            guard let team2 = match.team2 else {
+            guard match.team2 != nil else {
                 advancingTeams.append(match.team1)
                 continue
             }
