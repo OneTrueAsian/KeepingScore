@@ -116,11 +116,13 @@ struct TournamentBracketView: View {
     }
     
     func resetTournament() {
-        currentRound = 1
-        matches = []
-        eliminatedTeams = []
-        topTeams = []
-        generateInitialMatches()
+        DispatchQueue.main.async {
+            currentRound = 1
+            matches = []
+            eliminatedTeams = []
+            topTeams = []
+            generateInitialMatches()
+        }
     }
 
     private func advanceToNextRound() {

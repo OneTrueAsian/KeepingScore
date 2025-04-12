@@ -5,6 +5,8 @@ struct TournamentResult: Codable, Identifiable {
     var title: String
     var date: String
     var teams: [RankedTeam]
+    var allPlayers: [RankedTeam]?
+    var roundHistory: [Int] = []
     
     enum CodingKeys: String, CodingKey {
             case id, title, date, teams

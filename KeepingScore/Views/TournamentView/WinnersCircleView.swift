@@ -5,8 +5,26 @@ struct WinnersCircleView: View {
 
     @State private var navigateToMenu = false
 
+    @Environment(\.dismiss) var dismiss
+    
     var body: some View {
         VStack(spacing: 24) {
+            Button("Save Tournament") {
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateStyle = .medium
+                dateFormatter.timeStyle = .none
+                
+                let tournament = TournamentResult(
+                    title: "Tournament \(Date())",
+                    date: dateFormatter.string(from: Date()),
+                    teams: topTeams,
+                    allPlayers: topTeams // TODO: Replace with full player list
+                )
+                
+                TournamentResult.save(tournament)
+                dismiss()
+            }
+            .buttonStyle(.borderedProminent)
             Text("🏆 Winners Circle")
                 .font(.largeTitle)
                 .bold()
