@@ -1,12 +1,13 @@
 import SwiftUI
 
-// LandingPageView
+// MARK: - LandingPageView
 // This is the main landing page where users can choose between different score tracking options.
 struct LandingPageView: View {
     // List of available games or scoring options with their title, description, icon, and whether the icon is a custom image
     let items = [
         ("Simple Scoring", "Basic custom score tracker", "trophy.fill", false),
-        ("Skull King", "Dedicated scorecard for Skull King", "skullking", true)
+        ("Skull King", "Dedicated scorecard for Skull King", "skullking", true),
+        ("Tournament", "Create and manage knockout tournaments", "flag.checkered", false)
     ]
 
     var body: some View {
@@ -63,16 +64,18 @@ struct LandingPageView: View {
             SimpleScoringView() // Custom score tracking view
         case "Skull King":
             GameSetupView() // Skull King-specific setup and scoring
+        case "Tournament":
+            TournamentView()
         default:
             Text("Coming Soon") // Placeholder for future features
         }
     }
 }
 
-// GameCardView
+// MARK: - GameCardView
 // Reusable UI component for displaying a game option in the grid
 struct GameCardView: View {
-    var title: String // Game name
+    var title: String // Ttle
     var subtitle: String // Short description
     var icon: String // Icon name (SF Symbol or custom image)
     var isCustomImage: Bool = false // Determines if the icon is a custom image or SF Symbol
