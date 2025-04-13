@@ -9,20 +9,18 @@ struct Match: Identifiable {
 }
 
 struct TournamentBracketView: View {
+    // MARK: - State Properties
     @State var teams: [String]
     var autoGenerate: Bool
     @State var tournamentTitle: String
 
     @State private var matches: [Match] = []
-    @State private var currentRound: Int = 1 {
-        didSet {
-            print("Current round updated to: \(currentRound)")
-        }
-    }
+    @State private var currentRound: Int = 1
     @State private var eliminatedTeams: [(name: String, score: Int)] = []
     @State private var navigateToWinners = false
     @State private var topTeams: [RankedTeam] = []
 
+    // MARK: - Main View
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
@@ -31,62 +29,52 @@ struct TournamentBracketView: View {
                     .bold()
 
                 ForEach(matches) { match in
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("\(match.team1) vs \(match.team2 ?? "BYE")")
-                            .font(.headline)
-
-                        if match.team2 != nil {
-                            HStack {
-                                TextField("\(match.team1) Score", text: binding(for: match.id, isFirst: true))
-                                    .textFieldStyle(.roundedBorder)
-                                TextField("\(match.team2!) Score", text: binding(for: match.id, isFirst: false))
-                                    .textFieldStyle(.roundedBorder)
-                            }
-                        } else {
-                            Text("Automatically advances due to BYE.")
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
-                    .shadow(radius: 1)
+                    MatchRowView(
+                        match: match,
+                        score1Binding: binding(for: match.id, isFirst: true),
+                        score2Binding: binding(for: match.id, isFirst: false)
+                    )
                 }
             }
             .padding()
         }
         .safeAreaInset(edge: .bottom) {
-            Button("Next Round") {
-                advanceToNextRound()
-            }
-            .disabled(!isRoundComplete())
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(isRoundComplete() ? Color.blue : Color.gray.opacity(0.3))
-            .foregroundColor(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .padding(.horizontal)
+            nextRoundButton
         }
         .onAppear {
             generateInitialMatches()
         }
         .navigationTitle("Bracket")
         .navigationDestination(isPresented: $navigateToWinners) {
-        let rankedTeams: [RankedTeam] = teams.enumerated().map { index, name in
-            RankedTeam(name: name, score: 0, placement: index + 1)
-        }
-            WinnersCircleView(topTeams: topTeams, allTeams: rankedTeams)
+            WinnersCircleView(
+                topTeams: topTeams,
+                allTeams: teams.enumerated().map { index, name in
+                    RankedTeam(name: name, score: 0, placement: index + 1)
+                }
+            )
         }
     }
 
-    private func isRoundComplete() -> Bool {
-        for match in matches {
-            if match.team2 == nil { continue }
-            if Int(match.score1) == nil || Int(match.score2) == nil {
-                return false
-            }
+    // MARK: - View Components
+    private var nextRoundButton: some View {
+        Button("Next Round") {
+            advanceToNextRound()
         }
-        return true
+        .disabled(!isRoundComplete())
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(isRoundComplete() ? Color.blue : Color.gray.opacity(0.3))
+        .foregroundColor(.white)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .padding(.horizontal)
+    }
+
+    // MARK: - Private Methods
+    private func isRoundComplete() -> Bool {
+        matches.allSatisfy { match in
+            guard match.team2 != nil else { return true }
+            return Int(match.score1) != nil && Int(match.score2) != nil
+        }
     }
 
     private func binding(for matchID: UUID, isFirst: Bool) -> Binding<String> {
@@ -108,68 +96,40 @@ struct TournamentBracketView: View {
 
     private func generateInitialMatches() {
         var shuffledTeams = autoGenerate ? teams.shuffled() : teams
-        var matchList: [Match] = []
-
-        while !shuffledTeams.isEmpty {
-            let team1 = shuffledTeams.removeFirst()
-            let team2 = shuffledTeams.isEmpty ? nil : shuffledTeams.removeFirst()
-            matchList.append(Match(team1: team1, team2: team2))
+        matches = stride(from: 0, to: shuffledTeams.count, by: 2).map { i in
+            Match(
+                team1: shuffledTeams[i],
+                team2: i+1 < shuffledTeams.count ? shuffledTeams[i+1] : nil
+            )
         }
-
-        matches = matchList
     }
     
-    func resetTournament() {
-        DispatchQueue.main.async {
-            currentRound = 1
-            matches = []
-            eliminatedTeams = []
-            topTeams = []
-            generateInitialMatches()
-        }
-    }
-
     private func advanceToNextRound() {
         var advancingTeams: [String] = []
-
+        
         for match in matches {
-            guard let team2 = match.team2 else {
+            if match.team2 == nil {
                 advancingTeams.append(match.team1)
                 continue
             }
-
-            if let score1 = Int(match.score1), let score2 = Int(match.score2) {
-                if score1 == score2 {
-                    let winner = [match.team1, match.team2!].randomElement()!
-                    let loser = winner == match.team1 ? match.team2! : match.team1
-                    let loserScore = winner == match.team1 ? score2 : score1
-                    advancingTeams.append(winner)
-                    eliminatedTeams.append((loser, loserScore))
-                } else {
-                    let winner = score1 > score2 ? match.team1 : match.team2!
-                    let loser = score1 > score2 ? match.team2! : match.team1
-                    let loserScore = score1 > score2 ? score2 : score1
-                    advancingTeams.append(winner)
-                    eliminatedTeams.append((loser, loserScore))
-                }
+            
+            guard let score1 = Int(match.score1), let score2 = Int(match.score2) else { continue }
+            
+            if score1 == score2 {
+                let winner = [match.team1, match.team2!].randomElement()!
+                advancingTeams.append(winner)
+                eliminatedTeams.append((winner == match.team1 ? match.team2! : match.team1, 
+                                      winner == match.team1 ? score2 : score1))
+            } else {
+                let winner = score1 > score2 ? match.team1 : match.team2!
+                advancingTeams.append(winner)
+                eliminatedTeams.append((winner == match.team1 ? match.team2! : match.team1, 
+                                      winner == match.team1 ? score2 : score1))
             }
         }
 
         if advancingTeams.count == 1 {
-            let winnerName = advancingTeams.first!
-            let winnerScore = calculateTotalScore(for: winnerName)
-            let finalLoser = eliminatedTeams.last!
-            let thirdPlace = eliminatedTeams
-                .dropLast()
-                .sorted(by: { $0.1 > $1.1 })
-                .first ?? ("N/A", 0)
-
-            topTeams = [
-                RankedTeam(name: winnerName, score: winnerScore, placement: 1),
-                RankedTeam(name: finalLoser.0, score: finalLoser.1, placement: 2),
-                RankedTeam(name: thirdPlace.0, score: thirdPlace.1, placement: 3)
-            ]
-
+            prepareWinnersCircle(winner: advancingTeams[0])
             navigateToWinners = true
             return
         }
@@ -179,24 +139,74 @@ struct TournamentBracketView: View {
         generateInitialMatches()
     }
 
+    private func prepareWinnersCircle(winner: String) {
+        let winnerScore = calculateTotalScore(for: winner)
+        let finalLoser = eliminatedTeams.last!
+        let thirdPlace = eliminatedTeams
+            .dropLast()
+            .max(by: { $0.1 < $1.1 }) ?? ("N/A", 0)
+
+        topTeams = [
+            RankedTeam(name: winner, score: winnerScore, placement: 1),
+            RankedTeam(name: finalLoser.0, score: finalLoser.1, placement: 2),
+            RankedTeam(name: thirdPlace.0, score: thirdPlace.1, placement: 3)
+        ]
+    }
+
     private func calculateTotalScore(for team: String) -> Int {
-        var total = 0
-        for match in matches {
-            if match.team1 == team {
-                total += Int(match.score1) ?? 0
-            } else if match.team2 == team {
-                total += Int(match.score2) ?? 0
-            }
+        let matchScores = matches.reduce(0) { total, match in
+            total + 
+            (match.team1 == team ? Int(match.score1) ?? 0 : 0) +
+            (match.team2 == team ? Int(match.score2) ?? 0 : 0)
         }
-        for (name, score) in eliminatedTeams where name == team {
-            total += score
-        }
-        return total
+        
+        let eliminationScores = eliminatedTeams
+            .filter { $0.0 == team }
+            .reduce(0) { $0 + $1.1 }
+        
+        return matchScores + eliminationScores
     }
 }
 
+// MARK: - Subviews
+private struct MatchRowView: View {
+    let match: Match
+    @Binding var score1Binding: String
+    @Binding var score2Binding: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("\(match.team1) vs \(match.team2 ?? "BYE")")
+                .font(.headline)
+
+            if let team2 = match.team2 {
+                HStack {
+                    TextField("\(match.team1) Score", text: $score1Binding)
+                        .textFieldStyle(.roundedBorder)
+                    TextField("\(team2) Score", text: $score2Binding)
+                        .textFieldStyle(.roundedBorder)
+                }
+            } else {
+                Text("Automatically advances due to BYE.")
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(10)
+        .shadow(radius: 1)
+    }
+}
+
+// MARK: - Preview
 struct TournamentBracketView_Previews: PreviewProvider {
     static var previews: some View {
-        TournamentBracketView(teams: [], autoGenerate: true)
+        NavigationStack {
+            TournamentBracketView(
+                teams: ["Team A", "Team B", "Team C", "Team D"],
+                autoGenerate: true,
+                tournamentTitle: "Preview Tournament"
+            )
+        }
     }
 }
