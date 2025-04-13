@@ -49,14 +49,23 @@ struct WinnersCircleView: View {
                     dateFormatter.dateStyle = .medium
                     dateFormatter.timeStyle = .none
                     
-                    // Assign proper placements to all players
-                    let allRankedPlayers = allTeams.map { player in
-                        let placement = topTeams.firstIndex { $0.id == player.id } ?? allTeams.count
-                        return RankedTeam(name: player.name, score: player.score, placement: placement + 1)
+                    // Get tournament title from bracket view
+                    let bracketView = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?
+                        .windows.first?.rootViewController?
+                        .children.first(where: { $0 is TournamentBracketView }) as? TournamentBracketView
+                    
+                    let tournamentTitle = bracketView?.tournamentTitle ?? "Tournament \(dateFormatter.string(from: Date()))"
+                    
+                    // Assign placements (1st, 2nd, 3rd) and leave others as 0
+                    var allRankedPlayers = allTeams
+                    for (index, winner) in topTeams.enumerated() {
+                        if let playerIndex = allRankedPlayers.firstIndex(where: { $0.id == winner.id }) {
+                            allRankedPlayers[playerIndex].placement = index + 1
+                        }
                     }
                     
                     let tournament = TournamentResult(
-                        title: "Tournament \(dateFormatter.string(from: Date()))",
+                        title: tournamentTitle,
                         date: dateFormatter.string(from: Date()),
                         winners: topTeams,
                         allPlayers: allRankedPlayers,

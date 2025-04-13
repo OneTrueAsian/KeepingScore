@@ -82,29 +82,15 @@ struct NewTournamentSetupView: View {
                 
                 .safeAreaInset(edge: .bottom) {
                     Button("Continue") {
-                        let dateFormatter = DateFormatter()
-                        dateFormatter.dateStyle = .medium
-                        dateFormatter.timeStyle = .none
-                        
-                        // Break down complex expression
-                        let rankedTeams = teamNames.map { name in
-                            RankedTeam(name: name, score: 0, placement: 0)
-                        }
-                        
-                        let tournament = TournamentResult(
-                            title: tournamentTitle,
-                            date: dateFormatter.string(from: Date()),
-                            winners: [],
-                            allPlayers: rankedTeams,
-                            roundHistory: []
-                        )
-                        
+                        navigateToBracket = true
+                    }
                     .disabled(!isFormValid())
-                    
+                    .frame(maxWidth: .infinity)
                     .padding()
                     .background(isFormValid() ? Color.blue : Color.gray.opacity(0.3))
-                    .foregroundColor(Color.white)
+                    .foregroundColor(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .padding(.horizontal)
                     
                 }
 

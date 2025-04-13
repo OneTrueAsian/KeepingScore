@@ -11,6 +11,7 @@ struct Match: Identifiable {
 struct TournamentBracketView: View {
     @State var teams: [String]
     var autoGenerate: Bool
+    @State var tournamentTitle: String
 
     @State private var matches: [Match] = []
     @State private var currentRound: Int = 1 {
