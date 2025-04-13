@@ -5,19 +5,19 @@ struct TournamentDetailView: View {
     let tournament: TournamentResult
     
     // MARK: - Computed Properties
-    private var winners: [Player] {
-        tournament.winners.sorted { $0.placement < $1.placement }
+    private var sortedPlayers: [Player] {
+        tournament.allPlayers.sorted { $0.placement < $1.placement }
     }
     
-    private var allPlayers: [Player] {
-        tournament.allPlayers.sorted { $0.placement < $1.placement }
+    private var winners: [Player] {
+        tournament.winners.sorted { $0.placement < $1.placement }
     }
     
     // MARK: - Main View
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                headerSection
+                tournamentHeader
                 winnersSection
                 allPlayersSection
             }
@@ -28,7 +28,7 @@ struct TournamentDetailView: View {
     }
     
     // MARK: - View Sections
-    private var headerSection: some View {
+    private var tournamentHeader: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(tournament.title)
                 .font(.largeTitle)
@@ -36,7 +36,7 @@ struct TournamentDetailView: View {
             
             HStack(spacing: 16) {
                 Label(tournament.date, systemImage: "calendar")
-                Label("\(allPlayers.count) Teams", systemImage: "person.3.fill")
+                Label("\(tournament.allPlayers.count) Teams", systemImage: "person.3.fill")
             }
             .font(.subheadline)
             .foregroundColor(.secondary)
@@ -65,7 +65,7 @@ struct TournamentDetailView: View {
                     .bold()
                 
                 LazyVStack(spacing: 8) {
-                    ForEach(allPlayers) { player in
+                    ForEach(sortedPlayers) { player in
                         PlayerRow(player: player)
                     }
                 }
