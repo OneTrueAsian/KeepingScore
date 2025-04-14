@@ -1,10 +1,10 @@
 import SwiftUI
-import Models
+@_exported import KeepingScoreModels
 
 struct WinnersCircleView: View {
     // MARK: - Properties
-    let topTeams: [Models.RankedTeam]
-    let allTeams: [Models.RankedTeam]
+    let topTeams: [KeepingScoreModels.RankedTeam]
+    let allTeams: [KeepingScoreModels.RankedTeam]
     
     @State private var navigateToMenu = false
     @Environment(\.dismiss) var dismiss
@@ -90,20 +90,20 @@ struct WinnersCircleView: View {
             }
         }
         
-        let tournament = Models.TournamentResult(
+        let tournament = KeepingScoreModels.TournamentResult(
             title: tournamentTitle,
             date: dateFormatter.string(from: Date()),
             winners: topTeams,
             allPlayers: allRankedPlayers,
             roundHistory: []
         )
-        Models.TournamentResult.save(tournament)
+        KeepingScoreModels.TournamentResult.save(tournament)
     }
 }
 
 // MARK: - Subviews
 private struct WinnerRowView: View {
-    let team: Models.RankedTeam
+    let team: KeepingScoreModels.RankedTeam
     
     var body: some View {
         HStack {
@@ -141,15 +141,15 @@ struct WinnersCircleView_Previews: PreviewProvider {
         NavigationStack {
             WinnersCircleView(
                 topTeams: [
-                    Models.RankedTeam(name: "Team A", score: 100, placement: 1),
-                    Models.RankedTeam(name: "Team B", score: 90, placement: 2),
-                    Models.RankedTeam(name: "Team C", score: 80, placement: 3)
+                    KeepingScoreModels.RankedTeam(name: "Team A", score: 100, placement: 1),
+                    KeepingScoreModels.RankedTeam(name: "Team B", score: 90, placement: 2),
+                    KeepingScoreModels.RankedTeam(name: "Team C", score: 80, placement: 3)
                 ],
                 allTeams: [
-                    Models.RankedTeam(name: "Team A", score: 100, placement: 1),
-                    Models.RankedTeam(name: "Team B", score: 90, placement: 2),
-                    Models.RankedTeam(name: "Team C", score: 80, placement: 3),
-                    Models.RankedTeam(name: "Team D", score: 70, placement: 0)
+                    KeepingScoreModels.RankedTeam(name: "Team A", score: 100, placement: 1),
+                    KeepingScoreModels.RankedTeam(name: "Team B", score: 90, placement: 2),
+                    KeepingScoreModels.RankedTeam(name: "Team C", score: 80, placement: 3),
+                    KeepingScoreModels.RankedTeam(name: "Team D", score: 70, placement: 0)
                 ]
             )
         }

@@ -1,9 +1,9 @@
 import SwiftUI
-import Models
+@_exported import KeepingScoreModels
 
 struct PastTournamentsView: View {
     // MARK: - State Properties
-    @State private var results: [Models.TournamentResult] = []
+    @State private var results: [KeepingScoreModels.TournamentResult] = []
     @State private var isSelecting = false
     @State private var selectedIDs = Set<UUID>()
     @State private var showConfirmDeleteAll = false
@@ -76,7 +76,7 @@ struct PastTournamentsView: View {
     
     // MARK: - Private Methods
     private func loadTournaments() {
-        results = Models.TournamentResult.loadAll()
+        results = KeepingScoreModels.TournamentResult.loadAll()
     }
     
     private func toggleSelectionMode() {
@@ -135,7 +135,7 @@ struct PastTournamentsView: View {
 
 // MARK: - Subviews
 private struct TournamentRowView: View {
-    let tournament: Models.TournamentResult
+    let tournament: KeepingScoreModels.TournamentResult
     @Binding var isSelecting: Bool
     let isSelected: Bool
     let onSelect: () -> Void
