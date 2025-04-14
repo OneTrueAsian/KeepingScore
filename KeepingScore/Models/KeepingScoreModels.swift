@@ -1,4 +1,4 @@
-@_exported import Foundation
+import Foundation
 
 public protocol TournamentResultProtocol {
     var id: UUID { get }

@@ -1,5 +1,4 @@
 import SwiftUI
-import KeepingScoreModels
 
 struct BracketMatch: Identifiable {
     let id = UUID()
@@ -19,7 +18,7 @@ struct TournamentBracketView: View {
     @State private var currentRound: Int = 1
     @State private var eliminatedTeams: [(name: String, score: Int)] = []
     @State private var navigateToWinners = false
-    @State private var topTeams: [KeepingScoreModels.RankedTeam] = []
+    @State private var topTeams: [RankedTeam] = []
 
     // MARK: - Main View
     var body: some View {
@@ -50,7 +49,7 @@ struct TournamentBracketView: View {
             WinnersCircleView(
                 topTeams: topTeams,
                 allTeams: teams.enumerated().map { index, name in
-                KeepingScoreModels.RankedTeam(name: name, score: 0, placement: index + 1)
+                RankedTeam(name: name, score: 0, placement: index + 1)
                 }
             )
         }
@@ -148,9 +147,9 @@ struct TournamentBracketView: View {
             .max(by: { $0.1 < $1.1 }) ?? ("N/A", 0)
 
         topTeams = [
-            KeepingScoreModels.RankedTeam(name: winner, score: winnerScore, placement: 1),
-            KeepingScoreModels.RankedTeam(name: finalLoser.0, score: finalLoser.1, placement: 2),
-            KeepingScoreModels.RankedTeam(name: thirdPlace.0, score: thirdPlace.1, placement: 3)
+            RankedTeam(name: winner, score: winnerScore, placement: 1),
+            RankedTeam(name: finalLoser.0, score: finalLoser.1, placement: 2),
+            RankedTeam(name: thirdPlace.0, score: thirdPlace.1, placement: 3)
         ]
     }
 
