@@ -7,7 +7,6 @@ struct LandingPageView: View {
     let items = [
         ("Simple Scoring", "Basic custom score tracker", "trophy.fill", false),
         ("Skull King", "Dedicated scorecard for Skull King", "skullking", true),
-        ("Tournament", "Create and manage knockout tournaments", "flag.checkered", false)
     ]
 
     var body: some View {
@@ -64,8 +63,6 @@ struct LandingPageView: View {
             SimpleScoringView() // Custom score tracking view
         case "Skull King":
             GameSetupView() // Skull King-specific setup and scoring
-        case "Tournament":
-            TournamentView()
         default:
             Text("Coming Soon") // Placeholder for future features
         }
