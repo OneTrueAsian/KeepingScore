@@ -1,0 +1,29 @@
+version: "Apple Swift version 6.0.3 (swiftlang-6.0.3.1.10 clang-1600.0.30.1)"
+options: "cb5aea2321dac4fefa7b8f3018e76d50bdc2700316ad29786081d02c5a5ca393"
+build_start_time: [1744593211, 721829000]
+build_end_time: [1744593289, 307244000]
+inputs:
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Root/ContentView.swift": !dirty [1744415359, 847086408]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Root/KeepingScoreApp.swift": !dirty [1744415359, 847267528]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/Landing/BoxView.swift": !dirty [1744415359, 861652866]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/Landing/DetailView.swift": !dirty [1744415359, 861805653]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/Landing/LandingPageView.swift": !dirty [1744416385, 455515805]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/SimpleScoring/Scoring-SimpleScoringView.swift": !dirty [1744415359, 862421802]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/SimpleScoring/SimpleScoringView.swift": !dirty [1744415359, 862770334]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/SkullKingScoring/GameManager.swift": !dirty [1744415359, 862988869]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/SkullKingScoring/GameSetUpView.swift": !dirty [1744415359, 863304527]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/SkullKingScoring/LeaderBoardView.swift": !dirty [1744415359, 863467022]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/SkullKingScoring/Player.swift": !dirty [1744415359, 863609560]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/SkullKingScoring/PlayerSetUpView.swift": !dirty [1744415359, 863778096]
+  ? "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/SkullKingScoring/ScoreInputAndScoreboardView.swift"
+  : !dirty [1744417844, 881865866]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/TournamentView/NewTournamentSetupView.swift": !dirty [1744587821, 745492471]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/TournamentView/PastTournamentsView.swift": !dirty [1744592693, 54629401]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/TournamentView/TournamentBracketView.swift": !dirty [1744593022, 123699178]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/TournamentView/TournamentDetailView.swift": !dirty [1744593104, 357595470]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/TournamentView/TournamentManager.swift": !dirty [1744592370, 4904995]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/TournamentView/TournamentResult.swift": !dirty [1744592782, 328234629]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/TournamentView/TournamentView.swift": !dirty [1744416359, 395382246]
+  "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/KeepingScore/Views/TournamentView/WinnersCircleView.swift": !dirty [1744592587, 25730093]
+  ? "/Users/joeyfaas/Documents/Development/GithubRepo/KeepingScore/build/Keeping Score.build/Release/Keeping Score.build/DerivedSources/GeneratedAssetSymbols.swift"
+  : !dirty [1744593210, 11388019]

@@ -9,7 +9,7 @@ struct TournamentDetailView: View {
         tournament.winners.sorted { $0.placement < $1.placement }
     }
     
-    private var allPlayers: [TournamentManager.Player] {
+    private var allPlayers: [TournamentManager.RankedTeam] {
         tournament.allPlayers.sorted { $0.placement < $1.placement }
     }
     
@@ -106,7 +106,7 @@ private struct WinnerRow: View {
 }
 
 private struct PlayerRow: View {
-    let player: TournamentManager.Player
+    let player: TournamentManager.RankedTeam
     
     var body: some View {
         HStack {
@@ -137,8 +137,8 @@ struct TournamentDetailView_Previews: PreviewProvider {
                     TournamentManager.RankedTeam(name: "Team Bravo", score: 110, placement: 2)
                 ],
                 allPlayers: [
-                    TournamentManager.Player(name: "Player 1", score: 120, placement: 1),
-                    TournamentManager.Player(name: "Player 2", score: 110, placement: 2)
+                    TournamentManager.RankedTeam(name: "Player 1", score: 120, placement: 1),
+                    TournamentManager.RankedTeam(name: "Player 2", score: 110, placement: 2)
                 ],
                 roundHistory: []
             ))

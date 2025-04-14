@@ -151,9 +151,9 @@ struct TournamentBracketView: View {
             .max(by: { $0.1 < $1.1 }) ?? ("N/A", 0)
 
         topTeams = [
-            RankedTeam(name: winner, score: winnerScore, placement: 1),
-            RankedTeam(name: finalLoser.0, score: finalLoser.1, placement: 2),
-            RankedTeam(name: thirdPlace.0, score: thirdPlace.1, placement: 3)
+            TournamentManager.RankedTeam(name: winner, score: winnerScore, placement: 1),
+            TournamentManager.RankedTeam(name: finalLoser.0, score: finalLoser.1, placement: 2),
+            TournamentManager.RankedTeam(name: thirdPlace.0, score: thirdPlace.1, placement: 3)
         ]
     }
 
