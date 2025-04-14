@@ -3,7 +3,7 @@ import Foundation
 
 struct PastTournamentsView: View {
     // MARK: - State Properties
-    @State private var results: [TournamentResult] = []
+    @State private var results: [TournamentManager.TournamentResult] = []
     @State private var isSelecting = false
     @State private var selectedIDs = Set<UUID>()
     @State private var showConfirmDeleteAll = false
@@ -76,7 +76,7 @@ struct PastTournamentsView: View {
     
     // MARK: - Private Methods
     private func loadTournaments() {
-        results = KeepingScoreModels.TournamentResult.loadAll()
+        results = TournamentManager.TournamentResult.loadAll()
     }
     
     private func toggleSelectionMode() {
@@ -135,7 +135,7 @@ struct PastTournamentsView: View {
 
 // MARK: - Subviews
 private struct TournamentRowView: View {
-    let tournament: TournamentResult
+    let tournament: TournamentManager.TournamentResult
     @Binding var isSelecting: Bool
     let isSelected: Bool
     let onSelect: () -> Void

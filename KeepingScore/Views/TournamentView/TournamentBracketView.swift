@@ -18,7 +18,7 @@ struct TournamentBracketView: View {
     @State private var currentRound: Int = 1
     @State private var eliminatedTeams: [(name: String, score: Int)] = []
     @State private var navigateToWinners = false
-    @State private var topTeams: [RankedTeam] = []
+    @State private var topTeams: [TournamentManager.RankedTeam] = []
 
     // MARK: - Main View
     var body: some View {
@@ -49,7 +49,11 @@ struct TournamentBracketView: View {
             WinnersCircleView(
                 topTeams: topTeams,
                 allTeams: teams.enumerated().map { index, name in
-                RankedTeam(name: name, score: 0, placement: index + 1)
+                TournamentManager.RankedTeam(
+                    name: name,
+                    score: 0,
+                    placement: index + 1
+                    )
                 }
             )
         }
@@ -118,12 +122,12 @@ struct TournamentBracketView: View {
             if score1 == score2 {
                 let winner = [match.team1, match.team2!].randomElement()!
                 advancingTeams.append(winner)
-                eliminatedTeams.append((winner == match.team1 ? match.team2! : match.team1, 
+                eliminatedTeams.append((winner == match.team1 ? match.team2! : match.team1,
                                       winner == match.team1 ? score2 : score1))
             } else {
                 let winner = score1 > score2 ? match.team1 : match.team2!
                 advancingTeams.append(winner)
-                eliminatedTeams.append((winner == match.team1 ? match.team2! : match.team1, 
+                eliminatedTeams.append((winner == match.team1 ? match.team2! : match.team1,
                                       winner == match.team1 ? score2 : score1))
             }
         }
@@ -155,7 +159,7 @@ struct TournamentBracketView: View {
 
     private func calculateTotalScore(for team: String) -> Int {
         let matchScores = matches.reduce(0) { total, match in
-            total + 
+            total +
             (match.team1 == team ? Int(match.score1) ?? 0 : 0) +
             (match.team2 == team ? Int(match.score2) ?? 0 : 0)
         }

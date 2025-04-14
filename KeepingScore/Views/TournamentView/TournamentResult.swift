@@ -4,8 +4,8 @@ struct TournamentResult: Codable, Identifiable {
     var id = UUID()
     var title: String
     var date: String
-    var winners: [RankedTeam]
-    var allPlayers: [RankedTeam]
+    var winners: [TournamentManager.RankedTeam]
+    var allPlayers: [TournamentManager.RankedTeam]
     var roundHistory: [Int] = []
     
     enum CodingKeys: String, CodingKey {

@@ -1,10 +1,9 @@
 import SwiftUI
-import Foundation
 
 struct WinnersCircleView: View {
     // MARK: - Properties
-    let topTeams: [RankedTeam]
-    let allTeams: [RankedTeam]
+    let topTeams: [TournamentManager.RankedTeam]
+    let allTeams: [TournamentManager.RankedTeam]
     
     @State private var navigateToMenu = false
     @Environment(\.dismiss) var dismiss
@@ -90,20 +89,20 @@ struct WinnersCircleView: View {
             }
         }
         
-        let tournament = TournamentResult(
+        let tournament = TournamentManager.TournamentResult(
             title: tournamentTitle,
             date: dateFormatter.string(from: Date()),
             winners: topTeams,
             allPlayers: allRankedPlayers,
             roundHistory: []
         )
-        TournamentResult.save(tournament)
+        TournamentManager.TournamentResult.save(tournament)
     }
 }
 
 // MARK: - Subviews
 private struct WinnerRowView: View {
-    let team: RankedTeam
+    let team: TournamentManager.RankedTeam
     
     var body: some View {
         HStack {
@@ -141,15 +140,15 @@ struct WinnersCircleView_Previews: PreviewProvider {
         NavigationStack {
             WinnersCircleView(
                 topTeams: [
-                    RankedTeam(name: "Team A", score: 100, placement: 1),
-                    RankedTeam(name: "Team B", score: 90, placement: 2),
-                    RankedTeam(name: "Team C", score: 80, placement: 3)
+                    TournamentManager.RankedTeam(name: "Team A", score: 100, placement: 1),
+                    TournamentManager.RankedTeam(name: "Team B", score: 90, placement: 2),
+                    TournamentManager.RankedTeam(name: "Team C", score: 80, placement: 3)
                 ],
                 allTeams: [
-                    RankedTeam(name: "Team A", score: 100, placement: 1),
-                    RankedTeam(name: "Team B", score: 90, placement: 2),
-                    RankedTeam(name: "Team C", score: 80, placement: 3),
-                    RankedTeam(name: "Team D", score: 70, placement: 0)
+                    TournamentManager.RankedTeam(name: "Team A", score: 100, placement: 1),
+                    TournamentManager.RankedTeam(name: "Team B", score: 90, placement: 2),
+                    TournamentManager.RankedTeam(name: "Team C", score: 80, placement: 3),
+                    TournamentManager.RankedTeam(name: "Team D", score: 70, placement: 0)
                 ]
             )
         }

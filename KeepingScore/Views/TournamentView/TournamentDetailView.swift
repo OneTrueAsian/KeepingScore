@@ -2,14 +2,14 @@ import SwiftUI
 
 struct TournamentDetailView: View {
     // MARK: - Properties
-    let tournament: TournamentResult
+    let tournament: TournamentManager.TournamentResult
     
     // MARK: - Computed Properties
-    private var winners: [RankedTeam] {
+    private var winners: [TournamentManager.RankedTeam] {
         tournament.winners.sorted { $0.placement < $1.placement }
     }
     
-    private var allPlayers: [Player] {
+    private var allPlayers: [TournamentManager.Player] {
         tournament.allPlayers.sorted { $0.placement < $1.placement }
     }
     
@@ -74,7 +74,7 @@ struct TournamentDetailView: View {
 
 // MARK: - Subviews
 private struct WinnerRow: View {
-    let team: RankedTeam
+    let team: TournamentManager.RankedTeam
     
     var body: some View {
         HStack(spacing: 12) {
@@ -106,7 +106,7 @@ private struct WinnerRow: View {
 }
 
 private struct PlayerRow: View {
-    let player: Player
+    let player: TournamentManager.Player
     
     var body: some View {
         HStack {
@@ -129,16 +129,16 @@ private struct PlayerRow: View {
 struct TournamentDetailView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
-            TournamentDetailView(tournament: TournamentResult(
+            TournamentDetailView(tournament: TournamentManager.TournamentResult(
                 title: "Summer Championship",
                 date: "June 15, 2023",
                 winners: [
-                    RankedTeam(name: "Team Alpha", score: 120, placement: 1),
-                    RankedTeam(name: "Team Bravo", score: 110, placement: 2)
+                    TournamentManager.RankedTeam(name: "Team Alpha", score: 120, placement: 1),
+                    TournamentManager.RankedTeam(name: "Team Bravo", score: 110, placement: 2)
                 ],
                 allPlayers: [
-                    Player(name: "Player 1", score: 120, placement: 1),
-                    Player(name: "Player 2", score: 110, placement: 2)
+                    TournamentManager.Player(name: "Player 1", score: 120, placement: 1),
+                    TournamentManager.Player(name: "Player 2", score: 110, placement: 2)
                 ],
                 roundHistory: []
             ))
