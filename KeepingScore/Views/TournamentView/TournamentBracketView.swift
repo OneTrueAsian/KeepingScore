@@ -1,6 +1,7 @@
 import SwiftUI
+import KeepingScoreModels
 
-struct Match: Identifiable {
+struct BracketMatch: Identifiable {
     let id = UUID()
     var team1: String
     var team2: String?
@@ -14,11 +15,11 @@ struct TournamentBracketView: View {
     var autoGenerate: Bool
     @State var tournamentTitle: String
 
-    @State private var matches: [Match] = []
+    @State private var matches: [BracketMatch] = []
     @State private var currentRound: Int = 1
     @State private var eliminatedTeams: [(name: String, score: Int)] = []
     @State private var navigateToWinners = false
-    @State private var topTeams: [RankedTeam] = []
+    @State private var topTeams: [KeepingScoreModels.RankedTeam] = []
 
     // MARK: - Main View
     var body: some View {
@@ -49,7 +50,7 @@ struct TournamentBracketView: View {
             WinnersCircleView(
                 topTeams: topTeams,
                 allTeams: teams.enumerated().map { index, name in
-                    RankedTeam(name: name, score: 0, placement: index + 1)
+                KeepingScoreModels.RankedTeam(name: name, score: 0, placement: index + 1)
                 }
             )
         }
@@ -97,7 +98,7 @@ struct TournamentBracketView: View {
     private func generateInitialMatches() {
         var shuffledTeams = autoGenerate ? teams.shuffled() : teams
         matches = stride(from: 0, to: shuffledTeams.count, by: 2).map { i in
-            Match(
+        BracketMatch(
                 team1: shuffledTeams[i],
                 team2: i+1 < shuffledTeams.count ? shuffledTeams[i+1] : nil
             )
@@ -147,9 +148,9 @@ struct TournamentBracketView: View {
             .max(by: { $0.1 < $1.1 }) ?? ("N/A", 0)
 
         topTeams = [
-            RankedTeam(name: winner, score: winnerScore, placement: 1),
-            RankedTeam(name: finalLoser.0, score: finalLoser.1, placement: 2),
-            RankedTeam(name: thirdPlace.0, score: thirdPlace.1, placement: 3)
+            KeepingScoreModels.RankedTeam(name: winner, score: winnerScore, placement: 1),
+            KeepingScoreModels.RankedTeam(name: finalLoser.0, score: finalLoser.1, placement: 2),
+            KeepingScoreModels.RankedTeam(name: thirdPlace.0, score: thirdPlace.1, placement: 3)
         ]
     }
 
@@ -170,7 +171,7 @@ struct TournamentBracketView: View {
 
 // MARK: - Subviews
 private struct MatchRowView: View {
-    let match: Match
+    let match: BracketMatch
     @Binding var score1Binding: String
     @Binding var score2Binding: String
     

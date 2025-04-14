@@ -5,30 +5,29 @@ struct TournamentDetailView: View {
     let tournament: TournamentResult
     
     // MARK: - Computed Properties
-    private var sortedPlayers: [Player] {
-        tournament.allPlayers.sorted { $0.placement < $1.placement }
+    private var winners: [RankedTeam] {
+        tournament.winners.sorted { $0.placement < $1.placement }
     }
     
-    private var winners: [Player] {
-        tournament.winners.sorted { $0.placement < $1.placement }
+    private var allPlayers: [Player] {
+        tournament.allPlayers.sorted { $0.placement < $1.placement }
     }
     
     // MARK: - Main View
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                tournamentHeader
+                headerSection
                 winnersSection
-                allPlayersSection
+                playersSection
             }
             .padding()
         }
         .navigationTitle("Tournament Details")
-        .navigationBarTitleDisplayMode(.inline)
     }
     
     // MARK: - View Sections
-    private var tournamentHeader: some View {
+    private var headerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(tournament.title)
                 .font(.largeTitle)
@@ -36,10 +35,9 @@ struct TournamentDetailView: View {
             
             HStack(spacing: 16) {
                 Label(tournament.date, systemImage: "calendar")
-                Label("\(tournament.allPlayers.count) Teams", systemImage: "person.3.fill")
+                Label("\(allPlayers.count) Players", systemImage: "person.3.fill")
             }
             .font(.subheadline)
-            .foregroundColor(.secondary)
         }
     }
     
@@ -50,22 +48,22 @@ struct TournamentDetailView: View {
                     .font(.title2)
                     .bold()
                 
-                ForEach(winners) { player in
-                    WinnerCard(player: player)
+                ForEach(winners) { team in
+                    WinnerRow(team: team)
                 }
             }
         }
     }
     
-    private var allPlayersSection: some View {
+    private var playersSection: some View {
         Section {
             VStack(alignment: .leading, spacing: 12) {
-                Text("All Participants")
+                Text("All Players")
                     .font(.title2)
                     .bold()
                 
                 LazyVStack(spacing: 8) {
-                    ForEach(sortedPlayers) { player in
+                    ForEach(allPlayers) { player in
                         PlayerRow(player: player)
                     }
                 }
@@ -75,20 +73,19 @@ struct TournamentDetailView: View {
 }
 
 // MARK: - Subviews
-private struct WinnerCard: View {
-    let player: Player
+private struct WinnerRow: View {
+    let team: RankedTeam
     
     var body: some View {
         HStack(spacing: 12) {
-            Text(placementEmoji(for: player.placement))
+            Text(placementEmoji(for: team.placement))
                 .font(.title)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(player.name)
+                Text(team.name)
                     .font(.headline)
-                Text("Score: \(player.score)")
+                Text("Score: \(team.score)")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
             }
             
             Spacer()
@@ -115,7 +112,6 @@ private struct PlayerRow: View {
         HStack {
             Text("\(player.placement).")
                 .frame(width: 24, alignment: .trailing)
-                .foregroundColor(.secondary)
             
             Text(player.name)
                 .font(.headline)
@@ -124,7 +120,6 @@ private struct PlayerRow: View {
             
             Text("\(player.score)")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
         }
         .padding(.vertical, 8)
     }
@@ -135,19 +130,15 @@ struct TournamentDetailView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
             TournamentDetailView(tournament: TournamentResult(
-                title: "Summer Championship 2023",
+                title: "Summer Championship",
                 date: "June 15, 2023",
                 winners: [
-                    Player(name: "Team Alpha", score: 120, placement: 1),
-                    Player(name: "Team Bravo", score: 110, placement: 2),
-                    Player(name: "Team Charlie", score: 100, placement: 3)
+                    RankedTeam(name: "Team Alpha", score: 120, placement: 1),
+                    RankedTeam(name: "Team Bravo", score: 110, placement: 2)
                 ],
                 allPlayers: [
-                    Player(name: "Team Alpha", score: 120, placement: 1),
-                    Player(name: "Team Bravo", score: 110, placement: 2),
-                    Player(name: "Team Charlie", score: 100, placement: 3),
-                    Player(name: "Team Delta", score: 90, placement: 4),
-                    Player(name: "Team Echo", score: 80, placement: 5)
+                    Player(name: "Player 1", score: 120, placement: 1),
+                    Player(name: "Player 2", score: 110, placement: 2)
                 ],
                 roundHistory: []
             ))
