@@ -1,5 +1,5 @@
 import SwiftUI
-@_exported import KeepingScoreModels
+import KeepingScoreModels
 
 struct PastTournamentsView: View {
     // MARK: - State Properties

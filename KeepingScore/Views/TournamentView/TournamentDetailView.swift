@@ -1,15 +1,16 @@
 import SwiftUI
+import KeepingScoreModels
 
 struct TournamentDetailView: View {
     // MARK: - Properties
-    let tournament: TournamentResult
+    let tournament: KeepingScoreModels.TournamentResult
     
     // MARK: - Computed Properties
-    private var winners: [RankedTeam] {
+    private var winners: [KeepingScoreModels.RankedTeam] {
         tournament.winners.sorted { $0.placement < $1.placement }
     }
     
-    private var allPlayers: [Player] {
+    private var allPlayers: [KeepingScoreModels.Player] {
         tournament.allPlayers.sorted { $0.placement < $1.placement }
     }
     
@@ -74,7 +75,7 @@ struct TournamentDetailView: View {
 
 // MARK: - Subviews
 private struct WinnerRow: View {
-    let team: RankedTeam
+    let team: KeepingScoreModels.RankedTeam
     
     var body: some View {
         HStack(spacing: 12) {
@@ -106,7 +107,7 @@ private struct WinnerRow: View {
 }
 
 private struct PlayerRow: View {
-    let player: Player
+    let player: KeepingScoreModels.Player
     
     var body: some View {
         HStack {
@@ -129,16 +130,16 @@ private struct PlayerRow: View {
 struct TournamentDetailView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
-            TournamentDetailView(tournament: TournamentResult(
+            TournamentDetailView(tournament: KeepingScoreModels.TournamentResult(
                 title: "Summer Championship",
                 date: "June 15, 2023",
                 winners: [
-                    RankedTeam(name: "Team Alpha", score: 120, placement: 1),
-                    RankedTeam(name: "Team Bravo", score: 110, placement: 2)
+                    KeepingScoreModels.RankedTeam(name: "Team Alpha", score: 120, placement: 1),
+                    KeepingScoreModels.RankedTeam(name: "Team Bravo", score: 110, placement: 2)
                 ],
                 allPlayers: [
-                    Player(name: "Player 1", score: 120, placement: 1),
-                    Player(name: "Player 2", score: 110, placement: 2)
+                    KeepingScoreModels.Player(name: "Player 1", score: 120, placement: 1),
+                    KeepingScoreModels.Player(name: "Player 2", score: 110, placement: 2)
                 ],
                 roundHistory: []
             ))

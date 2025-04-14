@@ -1,5 +1,5 @@
 import SwiftUI
-@_exported import KeepingScoreModels
+import KeepingScoreModels
 
 struct WinnersCircleView: View {
     // MARK: - Properties
