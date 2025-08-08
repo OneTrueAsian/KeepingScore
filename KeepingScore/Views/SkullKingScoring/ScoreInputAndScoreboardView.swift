@@ -212,7 +212,8 @@ struct ScoreInputAndScoreboardView: View {
                 return
             }
             let bonus = Int(bonuses[i]) ?? 0
-            scores.append(gameManager.calculateScore(bid: bid, tricks: trick, bonus: bonus))
+            let baseScore = gameManager.calculateScore(bid: bid, tricks: trick)
+            scores.append(baseScore)
             bonusValues.append(bonus)
         }
 

@@ -11,33 +11,32 @@ class GameManager: ObservableObject {
     @Published var isGameOver: Bool = false            // Flags when the game is finished
 
     // calculateScore
-    /// Calculates a player’s score for a round based on their bid, tricks won, and bonus.
+    /// Calculates a player’s score for a round based on their bid and tricks won.
     ///
     /// - Parameters:
     ///   - bid: The number of tricks a player predicted they would win.
     ///   - tricks: The number of tricks the player actually won.
-    ///   - bonus: Any bonus points awarded this round.
-    /// - Returns: The total score for this round.
-    func calculateScore(bid: Int, tricks: Int, bonus: Int) -> Int {
+    /// - Returns: The total score for this round excluding any bonus.
+    func calculateScore(bid: Int, tricks: Int) -> Int {
         print("Calculating score for Bid: \(bid), Tricks: \(tricks)")
 
         // Perfect zero bid
         if bid == 0 && tricks == 0 {
-            return (currentRound * 10) + bonus
+            return currentRound * 10
         }
 
         // Exact match
         if bid == tricks {
-            return (bid * 20) + bonus
+            return bid * 20
         }
 
         // Failed zero bid
         if bid == 0 && tricks > 0 {
-            return (currentRound * -10) + bonus
+            return currentRound * -10
         }
 
         // All other failed bids
-        return (-abs(bid - tricks) * 10) + bonus
+        return -abs(bid - tricks) * 10
     }
 
     // addRoundScores
