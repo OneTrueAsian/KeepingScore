@@ -194,10 +194,12 @@ struct ScoreInputAndScoreboardView: View {
     private func submitScores() {
         let totalTricks = tricks.compactMap { Int($0) }.reduce(0, +)
 
-        // Validate tricks match round number
-        if totalTricks > gameManager.currentRound {
+        // Validate total trick count equals the round number; it must not exceed it
+        if totalTricks == gameManager.currentRound {
+            // proceed normally
+        } else {
             showError = true
-            errorMessage = "Total tricks (\(totalTricks)) cannot exceed the round number (\(gameManager.currentRound))."
+            errorMessage = "Total tricks (\(totalTricks)) must equal the round number (\(gameManager.currentRound))."
             return
         }
 
