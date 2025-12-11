@@ -1,129 +1,106 @@
 import SwiftUI
 
-// GameSetupView
-/// View where players are added before starting the Skull King game.
-/// Supports between 2 to 8 players and validates input before launching the game.
+/// Add players and start the Skull King game.
 struct GameSetupView: View {
-    @EnvironmentObject var gameManager: GameManager // Shared game state
-    @State private var playerNames: [String] = ["", ""] // At least 2 player fields to start
+    @EnvironmentObject var gameManager: GameManager
+
+    @State private var playerNames: [String] = ["", ""]
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
+    @State private var navigateToScoreboard = false
 
     var body: some View {
-        GeometryReader { geo in
-            ScrollView {
-                VStack(spacing: 24) {
-                    
-                    // Title
-                    Text("Ahoy! Enter Ye Crew")
-                        .font(.custom("Lodeh Regular", size: geo.size.width < 500 ? 28 : 36))
-                        .padding(.top)
+        VStack(spacing: 24) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Ahoy! Enter Ye Crew")
+                    .font(.title.bold())
+                Text("Add 2–8 players to start your Skull King game.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-                    // Player Inputs
-                    VStack(spacing: 12) {
-                        ForEach(0..<playerNames.count, id: \.self) { index in
-                            TextField("Player \(index + 1)", text: $playerNames[index])
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .frame(height: 44)
-                                .padding(.horizontal)
+            Form {
+                Section(header: Text("Players")) {
+                    ForEach(playerNames.indices, id: \.self) { index in
+                        TextField("Player \(index + 1)", text: $playerNames[index])
+                            .textInputAutocapitalization(.words)
+                    }
+
+                    Button {
+                        if playerNames.count < 8 {
+                            playerNames.append("")
+                        }
+                    } label: {
+                        Label("Add Player", systemImage: "plus")
+                    }
+                    .disabled(playerNames.count >= 8)
+
+                    if playerNames.count > 2 {
+                        Button(role: .destructive) {
+                            playerNames.removeLast()
+                        } label: {
+                            Label("Remove Last Player", systemImage: "minus.circle")
                         }
                     }
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(12)
-                    .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
-
-                    // Add / Remove Player Buttons
-                    HStack(spacing: 16) {
-                        // Add player if under 8 total
-                        Button(action: addPlayer) {
-                            Text("Add Player")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(playerNames.count < 8 ? Color.green : Color.gray)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                        }
-                        .disabled(playerNames.count >= 8)
-
-                        // Remove player if more than 2 total
-                        Button(action: removePlayer) {
-                            Text("Remove Player")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(playerNames.count > 2 ? Color.gray : Color.gray.opacity(0.5))
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                        }
-                        .disabled(playerNames.count <= 2)
-                    }
-
-                    // Start Game Button
-                    Button(action: validateAndStartGame) {
-                        Text("Start Game")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
-                    // Navigates when gameManager.isGameStarted becomes true
-                    .navigationDestination(isPresented: $gameManager.isGameStarted) {
-                        ScoreInputAndScoreboardView()
-                            .environmentObject(gameManager)
-                    }
-
-                    Spacer(minLength: 40)
                 }
-                .frame(maxWidth: 600) // Limits width for larger devices like iPads
-                .padding()
-                .frame(width: geo.size.width)
+
+                Section(header: Text("Rounds")) {
+                    Stepper("Max Rounds: \(gameManager.maxRounds)",
+                            value: $gameManager.maxRounds,
+                            in: 1...15)
+                }
+            }
+
+            Button {
+                startGame()
+            } label: {
+                Text("Start Game")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.horizontal)
+
+            NavigationLink(
+                destination: ScoreInputAndScoreboardView().environmentObject(gameManager),
+                isActive: $navigateToScoreboard
+            ) {
+                EmptyView()
             }
         }
-
-        // Error Alert
-        .alert(isPresented: $showError) {
-            Alert(
-                title: Text("Error"),
-                message: Text(errorMessage),
-                dismissButton: .default(Text("OK"))
-            )
-        }
-        .navigationTitle("Game Setup")
-    }
-
-    // Logic Functions
-
-    /// Adds a new blank player slot if the count is under 8
-    private func addPlayer() {
-        if playerNames.count < 8 {
-            playerNames.append("")
-            print("Added player slot. Total players: \(playerNames.count)")
+        .padding()
+        .navigationTitle("Skull King Setup")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
         }
     }
 
-    /// Removes the last player slot if the count is above 2
-    private func removePlayer() {
-        if playerNames.count > 2 {
-            playerNames.removeLast()
-            print("Removed player slot. Total players: \(playerNames.count)")
-        }
-    }
+    private func startGame() {
+        let trimmed = playerNames
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
 
-    /// Validates that all player fields are filled, then starts the game
-    private func validateAndStartGame() {
-        if playerNames.contains(where: { $0.trimmingCharacters(in: .whitespaces).isEmpty }) {
-            errorMessage = "Player names cannot be empty. Please fill in all player names."
+        guard trimmed.count >= 2 else {
+            errorMessage = "You need at least 2 non-empty player names."
             showError = true
             return
         }
 
-        // Filter out empty names and convert to Player objects
-        gameManager.players = playerNames
-            .filter { !$0.isEmpty }
-            .map { Player(name: $0) }
-
+        gameManager.players = trimmed.map { Player(name: $0) }
+        gameManager.currentRound = 1
         gameManager.isGameStarted = true
-        print("Game started with players: \(gameManager.players.map { $0.name })")
+        gameManager.isGameOver = false
+
+        navigateToScoreboard = true
+    }
+}
+
+#Preview {
+    NavigationStack {
+        GameSetupView()
+            .environmentObject(GameManager())
     }
 }
