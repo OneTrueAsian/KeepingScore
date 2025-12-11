@@ -1,260 +1,246 @@
 import SwiftUI
 
-// ScoringView
-// This view handles score input and tracking for multiple players over a set number of rounds.
+/// ScoringView
+/// Handles score input and running totals over a set (or indefinite) number of rounds.
 struct ScoringView: View {
-    // Player list and round settings
-    @State private var players: [String]
-    var totalRounds: Int
+    // Input
+    let players: [String]
+    let totalRounds: Int   // -1 means indefinite rounds
 
     // Score tracking
     @State private var scores: [String: Int] = [:]
     @State private var enteredPoints: [String: String] = [:]
     @State private var currentRound: Int = 1
-    @State private var showCompletionAlert = false
     @State private var lastRoundSubmitted = false
 
-    // Error handling
-    @State private var showErrorAlert: Bool = false
-    @State private var errorMessage: String = ""
-
-    // Score editing
-    @State private var isEditingScores: Bool = false
+    // Editing existing scores
+    @State private var isEditingScores = false
     @State private var updatedScores: [String: String] = [:]
 
-    // Player renaming
-    @State private var showRenameAlert = false
-    @State private var newName = ""
-    @State private var indexToRename: Int? = nil
+    // Alerts
+    @State private var showCompletionAlert = false
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
 
-    // Player deletion
-    @State private var showDeleteConfirmation = false
-    @State private var indexToDelete: Int? = nil
+    @Environment(\.dismiss) private var dismiss
 
-    // For dismissing the view
-    @Environment(\.presentationMode) var presentationMode
-
-    // Custom initializer to set up initial state
-    init(players: [String], totalRounds: Int) {
-        self._players = State(initialValue: players)
-        self.totalRounds = totalRounds
-        _scores = State(initialValue: Dictionary(uniqueKeysWithValues: players.map { ($0, 0) }))
-        _enteredPoints = State(initialValue: Dictionary(uniqueKeysWithValues: players.map { ($0, "") }))
-        _updatedScores = State(initialValue: Dictionary(uniqueKeysWithValues: players.map { ($0, "0") }))
-    }
+    private var isInfiniteRounds: Bool { totalRounds < 0 }
 
     var body: some View {
-        GeometryReader { geo in
-            ScrollView {
-                VStack(spacing: 24) {
-                    
-                    // Round Title
-                    Text(totalRounds == -1 ? "Round \(currentRound)" : "Round \(currentRound) of \(totalRounds)")
-                        .font(.system(size: geo.size.width * 0.070, weight: .bold))
-                        .padding(.top)
+        ScrollView {
+            VStack(spacing: 24) {
 
-                    // Player Input Section
-                    VStack(spacing: 16) {
+                // ROUND PILL
+                HStack {
+                    Text("Round")
+                        .font(.headline)
+                        .foregroundColor(.white)
+
+                    Spacer()
+
+                    Text(isInfiniteRounds ? "#\(currentRound)"
+                                          : "#\(currentRound) of \(totalRounds)")
+                        .font(.headline)
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(Color.scorePrimary)
+                )
+
+                // ENTER SCORES SECTION
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Enter scores for this round")
+                        .font(.headline)
+                        .foregroundColor(.scorePrimary)
+
+                    VStack(spacing: 12) {
                         ForEach(players, id: \.self) { player in
-                            VStack(alignment: .leading, spacing: 8) {
+                            HStack {
                                 Text(player)
-                                    .font(.headline)
+                                    .foregroundColor(.white)
 
-                                // Input field for score entry
-                                TextField("Enter points", text: Binding(
-                                    get: { enteredPoints[player, default: "" ] },
+                                Spacer()
+
+                                TextField("0", text: Binding(
+                                    get: { enteredPoints[player] ?? "" },
                                     set: { enteredPoints[player] = $0 }
                                 ))
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 80)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(Color.black.opacity(0.6))
+                                )
+                                .foregroundColor(.white)
                             }
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
-                            .frame(maxWidth: .infinity)
-                            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                         }
-                    }
-                    .padding(.horizontal)
-                    .frame(maxWidth: 700)
 
-                    // Submit Button
-                    Button(action: submitRound) {
-                        Text((totalRounds != -1 && currentRound == totalRounds) ? "Enter Score" : "Next Round")
+                        Button {
+                            submitRound()
+                        } label: {
+                            Text("Submit Round")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                        }
+                        .buttonStyle(.plain)
+                        .background(
+                            Capsule()
+                                .fill(Color.scorePrimaryAction)
+                        )
+                        .foregroundColor(.white)
+                        .padding(.top, 4)
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .fill(Color.scorePrimary)
+                    )
+                }
+
+                // SCOREBOARD SECTION
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Scoreboard")
                             .font(.headline)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background((totalRounds != -1 && lastRoundSubmitted) ? Color.gray : Color.blue)
-                            .cornerRadius(10)
-                            .foregroundColor(.white)
-                    }
-                    .padding(.horizontal)
-                    .disabled(totalRounds != -1 && lastRoundSubmitted)
+                            .foregroundColor(.scorePrimary)
 
-                    // Scoreboard Section
-                    VStack(spacing: 16) {
-                        HStack {
-                            Text("Scoreboard")
-                                .font(.title2.bold())
-                            Spacer()
-                            Button(action: toggleEditMode) {
-                                Text(isEditingScores ? "Done Editing" : "Edit Scores")
-                                    .padding(.horizontal)
-                                    .padding(.vertical, 6)
-                                    .background(isEditingScores ? Color.green : Color.blue)
+                        Spacer()
+
+                        Button(isEditingScores ? "Done Editing" : "Edit Scores") {
+                            toggleScoreEditing()
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.scoreSecondaryAction)
+                    }
+
+                    VStack(spacing: 12) {
+                        ForEach(players.sorted(by: { scores[$0, default: 0] > scores[$1, default: 0] }), id: \.self) { player in
+                            HStack {
+                                Text(player)
                                     .foregroundColor(.white)
-                                    .cornerRadius(8)
-                            }
-                        }
-                        .padding(.horizontal)
 
-                        // List of players with scores and swipe actions
-                        List {
-                            ForEach(players.indices, id: \.self) { index in
-                                let player = players[index]
+                                Spacer()
 
-                                HStack {
-                                    Text(player)
-                                        .frame(width: geo.size.width > 500 ? 200 : 120, alignment: .leading)
-                                    Spacer()
-                                    if isEditingScores {
-                                        // Score editing field
-                                        TextField("Score", text: Binding(
-                                            get: { updatedScores[player, default: "0"] },
-                                            set: { updatedScores[player] = $0 }
-                                        ))
-                                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                                        .keyboardType(.numberPad)
-                                        .frame(width: 100)
-                                    } else {
-                                        Text("\(scores[player, default: 0]) points")
-                                            .fontWeight(.bold)
-                                    }
-                                }
-                                // Swipe to rename or delete
-                                .swipeActions(edge: .trailing) {
-                                    Button(role: .destructive) {
-                                        indexToDelete = index
-                                        showDeleteConfirmation = true
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-
-                                    Button {
-                                        indexToRename = index
-                                        newName = players[index]
-                                        showRenameAlert = true
-                                    } label: {
-                                        Label("Rename", systemImage: "pencil")
-                                    }
-                                    .tint(.blue)
+                                if isEditingScores {
+                                    TextField("Score", text: Binding(
+                                        get: { updatedScores[player] ?? "\(scores[player, default: 0])" },
+                                        set: { updatedScores[player] = $0 }
+                                    ))
+                                    .keyboardType(.numberPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .frame(width: 80)
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 10)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .fill(Color.black.opacity(0.6))
+                                    )
+                                    .foregroundColor(.white)
+                                } else {
+                                    Text("\(scores[player, default: 0])")
+                                        .monospacedDigit()
+                                        .foregroundColor(.white)
                                 }
                             }
                         }
-                        .frame(height: min(CGFloat(players.count) * 60 + 20, 400))
                     }
-                    .padding(.horizontal)
-
-                    Spacer(minLength: 40)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .fill(Color.scorePrimary)
+                    )
                 }
-                .frame(maxWidth: 700)
-                .padding(.bottom, 40)
-                .frame(width: geo.size.width)
+
+                Spacer(minLength: 16)
+            }
+            .padding()
+        }
+        .background(Color.scoreBackground.ignoresSafeArea())
+        .navigationTitle("Simple Scoring")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color.scoreBackground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .tint(.scorePrimary)
+        .onAppear {
+            for player in players {
+                scores[player] = 0
             }
         }
-
-        // Rename Alert
-        .alert("Rename Player", isPresented: $showRenameAlert, actions: {
-            TextField("New name", text: $newName)
-            Button("Save") {
-                if let index = indexToRename {
-                    let oldName = players[index]
-                    players[index] = newName
-
-                    // Migrate player data to new name
-                    scores[newName] = scores[oldName]
-                    scores.removeValue(forKey: oldName)
-
-                    enteredPoints[newName] = enteredPoints[oldName]
-                    enteredPoints.removeValue(forKey: oldName)
-
-                    updatedScores[newName] = updatedScores[oldName]
-                    updatedScores.removeValue(forKey: oldName)
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        }, message: {
-            Text("Enter a new name for this player.")
-        })
-
-        // Delete Alert
-        .alert("Delete Player?", isPresented: $showDeleteConfirmation, actions: {
-            Button("Delete", role: .destructive) {
-                if let index = indexToDelete {
-                    let name = players[index]
-                    players.remove(at: index)
-                    scores.removeValue(forKey: name)
-                    enteredPoints.removeValue(forKey: name)
-                    updatedScores.removeValue(forKey: name)
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        }, message: {
-            Text("Are you sure you want to remove this player and their score?")
-        })
+        .alert("Game Complete", isPresented: $showCompletionAlert) {
+            Button("OK") { dismiss() }
+        } message: {
+            Text("All rounds have been completed.")
+        }
+        .alert("Error", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
+        }
     }
 
-    // submitRound
-    // Handles score submission for the current round, including input validation and round progression.
+    // MARK: - Actions
+
     private func submitRound() {
-        let hasValidInput = players.contains { player in
-                if let input = enteredPoints[player]?.trimmingCharacters(in: .whitespacesAndNewlines),
-                   !input.isEmpty,
-                   Int(input) != nil {
-                    return true
-                }
-                return false
-            }
+        var roundDelta: [String: Int] = [:]
 
-        guard hasValidInput else {
-            errorMessage = "Please enter at least one valid score before proceeding to the next round."
-            showErrorAlert = true
-            return
-        }
-
-        // Add entered points to each player's total
         for player in players {
-            if let points = Int(enteredPoints[player] ?? "0") {
-                scores[player, default: 0] += points
+            let text = enteredPoints[player] ?? ""
+            guard !text.isEmpty else {
+                errorMessage = "Please enter a score for all players."
+                showErrorAlert = true
+                return
             }
-            enteredPoints[player] = ""
+            guard let value = Int(text) else {
+                errorMessage = "Scores must be whole numbers."
+                showErrorAlert = true
+                return
+            }
+            roundDelta[player] = value
         }
 
-        // If it's the last round, show completion alert
-        if totalRounds != -1 && currentRound == totalRounds {
-            lastRoundSubmitted = true
-            showCompletionAlert = true
-        } else {
+        for (player, delta) in roundDelta {
+            scores[player, default: 0] += delta
+        }
+
+        enteredPoints.removeAll()
+
+        if isInfiniteRounds {
             currentRound += 1
+        } else {
+            if currentRound >= totalRounds {
+                lastRoundSubmitted = true
+                showCompletionAlert = true
+            } else {
+                currentRound += 1
+            }
         }
     }
 
-    // toggleEditMode
-    // Switch between score editing mode and normal view. Updates scores when exiting edit mode.
-    private func toggleEditMode() {
+    private func toggleScoreEditing() {
         if isEditingScores {
-            // Save edited scores
             for player in players {
                 if let newScore = Int(updatedScores[player] ?? "") {
                     scores[player] = newScore
                 }
             }
         } else {
-            // Populate editable fields with current scores
             updatedScores = Dictionary(uniqueKeysWithValues: players.map {
                 ($0, "\(scores[$0, default: 0])")
             })
         }
         isEditingScores.toggle()
+    }
+}
+
+#Preview {
+    NavigationStack {
+        ScoringView(players: ["Yay"], totalRounds: 5)
     }
 }

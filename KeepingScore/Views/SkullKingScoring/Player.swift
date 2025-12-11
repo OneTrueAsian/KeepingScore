@@ -1,5 +1,3 @@
-// MARK: - Player.swift
-import SwiftUI
 import Foundation
 
 struct Player: Identifiable {
@@ -7,4 +5,3 @@ struct Player: Identifiable {
     var name: String
     var totalScore: Int = 0
 }
-
