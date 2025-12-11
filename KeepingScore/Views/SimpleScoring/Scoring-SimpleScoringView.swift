@@ -207,10 +207,14 @@ struct ScoringView: View {
     // submitRound
     // Handles score submission for the current round, including input validation and round progression.
     private func submitRound() {
-        let hasValidInput = players.contains {
-            guard let input = enteredPoints[$0], let points = Int(input), points != 0 else { return false }
-            return true
-        }
+        let hasValidInput = players.contains { player in
+                if let input = enteredPoints[player]?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   !input.isEmpty,
+                   Int(input) != nil {
+                    return true
+                }
+                return false
+            }
 
         guard hasValidInput else {
             errorMessage = "Please enter at least one valid score before proceeding to the next round."
