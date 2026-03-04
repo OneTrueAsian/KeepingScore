@@ -7,60 +7,77 @@ struct TournamentMatchDetailView: View {
     let matchId: UUID
 
     @State private var selectedGameType: TournamentGameType = .simpleScoring
-    @State private var navigateToScoring = false
+    @State private var goToScoring: Bool = false
 
     var body: some View {
-        let tournament = tournamentStore.tournament(id: tournamentId)
-        let match = tournament?.matches.first(where: { $0.id == matchId })
-
         VStack(spacing: 16) {
-            if let tournament, let match {
+            if let tournament = tournamentStore.tournament(id: tournamentId),
+               let match = tournament.matches.first(where: { $0.id == matchId }) {
+
                 let aName = displayName(for: match.playerAId, in: tournament)
                 let bName = displayName(for: match.playerBId, in: tournament)
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Match \(match.matchNumber)")
                         .font(.title2.bold())
                         .foregroundColor(Color.scorePrimary)
 
                     Text("\(aName) vs \(bName)")
                         .font(.headline)
-                        .foregroundColor(Color.scorePrimary.opacity(0.8))
+                        .foregroundColor(Color.scorePrimary.opacity(0.85))
                 }
+                .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 3)
                 .padding(.horizontal)
 
-                // Game type dropdown (future-proof)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Game Type")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundColor(Color.scorePrimary.opacity(0.75))
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Scoring Game")
+                        .font(.headline)
+                        .foregroundColor(Color.scorePrimary)
 
-                    Picker("Game Type", selection: $selectedGameType) {
-                        ForEach(TournamentGameType.allCases, id: \.self) { t in
-                            Text(t.displayName).tag(t)
+                    Menu {
+                        ForEach(TournamentGameType.allCases) { type in
+                            Button(type.displayName) { selectedGameType = type }
                         }
+                    } label: {
+                        HStack {
+                            Text(selectedGameType.displayName)
+                                .foregroundColor(Color.scorePrimary)
+
+                            Spacer()
+
+                            Image(systemName: "chevron.down")
+                                .foregroundColor(Color.scorePrimary.opacity(0.7))
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Color.scorePrimary.opacity(0.15), lineWidth: 1)
+                        )
                     }
-                    .pickerStyle(.menu)
-                    .tint(Color.scorePrimary)
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(Color.scorePrimary.opacity(0.20), lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .padding(.horizontal)
 
                 Button {
-                    navigateToScoring = true
+                    // ✅ Persist immediately (subtask support)
+                    _ = tournamentStore.setScoringContext(
+                        tournamentId: tournamentId,
+                        matchId: matchId,
+                        gameType: selectedGameType
+                    )
+
+                    goToScoring = true
                 } label: {
                     Text("Start Scoring")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, 14)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Color.scorePrimary)
@@ -70,64 +87,32 @@ struct TournamentMatchDetailView: View {
 
                 Spacer(minLength: 0)
 
-                // Push scoring flow
-                NavigationLink(isActive: $navigateToScoring) {
-                    scoringDestination(
-                        gameType: selectedGameType,
-                        playerAName: aName,
-                        playerBName: bName
-                    )
-                } label: {
-                    EmptyView()
-                }
-                .hidden()
-
             } else {
                 Text("Match not found.")
                     .foregroundColor(Color.scorePrimary)
                 Spacer()
             }
         }
-        .padding(.top, 8)
         .background(Color.scoreBackground.ignoresSafeArea())
         .navigationTitle("Match")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $goToScoring) {
+            scoringDestination()
+        }
     }
 
-    // MARK: - Destination
-
     @ViewBuilder
-    private func scoringDestination(gameType: TournamentGameType, playerAName: String, playerBName: String) -> some View {
-        // IMPORTANT:
-        // This story is only about launching the flow and coming back to match details.
-        // Prefilling the two players inside each scoring game is the next integration step
-        // (and will require touching the scoring setup screens).
-        switch gameType {
+    private func scoringDestination() -> some View {
+        switch selectedGameType {
         case .simpleScoring:
             SimpleScoringView()
         case .skullKing:
-            GameSetUpView()
+            GameSetupView()
         }
     }
-
-    // MARK: - Helpers
 
     private func displayName(for participantId: UUID?, in tournament: Tournament) -> String {
-        guard let participantId else { return "BYE" }
-        return tournament.participants.first(where: { $0.id == participantId })?.name ?? "Unknown"
-    }
-}
-
-// MARK: - Game Types
-
-enum TournamentGameType: CaseIterable {
-    case simpleScoring
-    case skullKing
-
-    var displayName: String {
-        switch self {
-        case .simpleScoring: return "Simple Scoring"
-        case .skullKing: return "Skull King"
-        }
+        guard let id = participantId else { return "TBD" }
+        return tournament.participants.first(where: { $0.id == id })?.displayName ?? "TBD"
     }
 }

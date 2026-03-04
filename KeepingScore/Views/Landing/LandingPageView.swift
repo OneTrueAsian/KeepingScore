@@ -27,6 +27,14 @@ struct LandingPageView: View {
             subtitle: "Dedicated scorecard for Skull King",
             icon: "skullking",
             isCustomImage: true
+        ),
+
+        // NEW (Tournament entry point)
+        .init(
+            title: "Tournament",
+            subtitle: "Run multi-game events",
+            icon: "trophy.circle.fill",
+            isCustomImage: false
         )
     ]
 
@@ -79,8 +87,13 @@ struct LandingPageView: View {
         switch item.title {
         case "Simple Scoring":
             SimpleScoringView()
+
         case "Skull King":
             GameSetupView()
+
+        case "Tournament":
+            TournamentSetupView()
+
         default:
             Text("Coming Soon")
         }
@@ -115,6 +128,7 @@ struct GameCardView: View {
                 Text(item.title)
                     .font(.headline)
                     .foregroundColor(Color.scorePrimary)
+
                 Text(item.subtitle)
                     .font(.footnote)
                     .foregroundColor(Color.scorePrimary.opacity(0.7))

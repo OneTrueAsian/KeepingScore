@@ -2,59 +2,132 @@ import SwiftUI
 
 struct TournamentBracketView: View {
     @EnvironmentObject private var tournamentStore: TournamentStore
+
     let tournamentId: UUID?
 
+    @State private var tournament: Tournament?
+    @State private var currentRound: Int = 1
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Bracket (Round 1)")
-                    .font(.largeTitle.bold())
-                    .foregroundColor(Color.scorePrimary)
-                    .padding(.top, 8)
+        VStack(spacing: 16) {
+            if let tournament {
+                let rounds = availableRounds(from: tournament.matches)
+                let roundToShow = min(max(currentRound, rounds.first ?? 1), rounds.last ?? 1)
+                let matchesForRound = tournament.matches
+                    .filter { $0.roundNumber == roundToShow }
+                    .sorted { $0.matchNumber < $1.matchNumber }
 
-                if let id = tournamentId,
-                   let t = tournamentStore.tournament(id: id) {
+                header(round: roundToShow)
 
-                    ForEach(t.matches) { m in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Match \(m.matchNumber)")
-                                .font(.headline)
-                                .foregroundColor(Color.scorePrimary)
-
-                            Text(matchText(m, tournament: t))
-                                .font(.subheadline)
-                                .foregroundColor(Color.scorePrimary.opacity(0.8))
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(matchesForRound) { match in
+                            NavigationLink {
+                                TournamentMatchDetailView(
+                                    tournamentId: tournament.id,
+                                    matchId: match.id
+                                )
+                            } label: {
+                                matchCard(match: match, tournament: tournament)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 3)
                     }
-
-                } else {
-                    Text("Tournament not found.")
-                        .foregroundColor(Color.scorePrimary.opacity(0.7))
+                    .padding(.horizontal)
+                    .padding(.bottom, 24)
                 }
 
-                Spacer(minLength: 24)
+                if rounds.count > 1 {
+                    HStack {
+                        Button("Prev") { currentRound = max(rounds.first ?? 1, roundToShow - 1) }
+                            .buttonStyle(.bordered)
+                            .tint(Color.scorePrimary)
+
+                        Spacer()
+
+                        Text("Round \(roundToShow) of \(rounds.last ?? roundToShow)")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundColor(Color.scorePrimary.opacity(0.8))
+
+                        Spacer()
+
+                        Button("Next") { currentRound = min(rounds.last ?? roundToShow, roundToShow + 1) }
+                            .buttonStyle(.bordered)
+                            .tint(Color.scorePrimary)
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+                }
+
+                Spacer(minLength: 0)
+            } else {
+                Text("Bracket not available.")
+                    .foregroundColor(Color.scorePrimary)
+                    .padding()
+                Spacer()
             }
-            .padding(.horizontal)
-            .frame(maxWidth: 700)            // keeps it readable on iPad
-            .frame(maxWidth: .infinity)      // ensures full-width background fill
         }
-        .background(Color.scoreBackground.ignoresSafeArea()) // ✅ removes black stripes
+        .background(Color.scoreBackground.ignoresSafeArea())
         .navigationTitle("Bracket")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color.scoreBackground, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        .onAppear { loadTournament() }
     }
 
-    private func matchText(_ m: TournamentMatch, tournament: Tournament) -> String {
-        func name(for id: UUID?) -> String {
-            guard let id else { return "BYE" }
-            return tournament.participants.first(where: { $0.id == id })?.displayName ?? "Unknown"
+    private func header(round: Int) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Bracket (Round \(round))")
+                .font(.largeTitle.bold())
+                .foregroundColor(Color.scorePrimary)
+
+            Text("Tap a match to start scoring.")
+                .font(.subheadline)
+                .foregroundColor(Color.scorePrimary.opacity(0.75))
         }
-        return "\(name(for: m.playerAId)) vs \(name(for: m.playerBId))"
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal)
+        .padding(.top, 12)
+    }
+
+    private func matchCard(match: TournamentMatch, tournament: Tournament) -> some View {
+        let aName = displayName(for: match.playerAId, in: tournament)
+        let bName = displayName(for: match.playerBId, in: tournament)
+
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("Match \(match.matchNumber)")
+                .font(.headline)
+                .foregroundColor(Color.scorePrimary)
+
+            Text("\(aName) vs \(bName)")
+                .font(.subheadline)
+                .foregroundColor(Color.scorePrimary.opacity(0.75))
+
+            if let type = match.gameType {
+                Text("Game: \(type.displayName)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(Color.scorePrimary.opacity(0.6))
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 3)
+        .contentShape(Rectangle())
+    }
+
+    private func displayName(for participantId: UUID?, in tournament: Tournament) -> String {
+        guard let id = participantId else { return "TBD" }
+        return tournament.participants.first(where: { $0.id == id })?.displayName ?? "TBD"
+    }
+
+    private func availableRounds(from matches: [TournamentMatch]) -> [Int] {
+        let set = Set(matches.map { $0.roundNumber })
+        return Array(set).sorted()
+    }
+
+    private func loadTournament() {
+        guard let tournamentId else { return }
+        tournament = tournamentStore.tournament(id: tournamentId)
+        currentRound = 1
     }
 }
