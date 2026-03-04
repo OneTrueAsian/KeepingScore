@@ -121,7 +121,7 @@ struct GameSetupView: View {
                 .font(.caption)
                 .foregroundColor(SkullKingTheme.textSecondary)
             Stepper {
-                Text("Max Rounds: \(gameManager.maxRounds)")
+                Text("Max Number of Rounds: \(gameManager.maxRounds)")
                     .foregroundColor(SkullKingTheme.textPrimary)
                     .font(.subheadline.weight(.semibold))
             } onIncrement: {
