@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /Users/joeyfaas/Documents/KeepingScore/KeepingScore/Views/Tournaments/*.swift)",
+      "WebFetch(domain:www.cs.drexel.edu)",
+      "WebSearch",
+      "WebFetch(domain:www.monopolyland.com)",
+      "WebFetch(domain:en.wikibooks.org)",
+      "WebFetch(domain:www.jdawiseman.com)",
+      "WebFetch(domain:www.donaldsauter.com)"
+    ]
+  }
+}

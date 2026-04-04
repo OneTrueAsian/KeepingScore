@@ -1,280 +1,465 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
 
-// ScoreInputAndScoreboardView
-/// Allows players to input their round scores (bids, tricks, bonuses),
-/// edit scores directly, rename or delete players, and submit scores per round.
-/// Displays a running scoreboard and navigates to the leaderboard when the game ends.
+// MARK: - Keyboard dismiss helper
+extension UIApplication {
+    func endEditing() {
+        sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+#endif
+
+/// Skull King scoring screen:
+/// - Enter bid / tricks / bonus per player per round
+/// - Submit round (uses GameManager.calculateScore + GameManager.addRound)
+/// - Inline "Edit Scores" directly in the scoreboard (Save / Cancel)
+/// - Tap outside any field OR tap "Done" to dismiss the number pad
 struct ScoreInputAndScoreboardView: View {
     @EnvironmentObject var gameManager: GameManager
 
-    // Input States
+    // Round entry inputs
     @State private var bids: [String] = []
     @State private var tricks: [String] = []
     @State private var bonuses: [String] = []
-    @State private var updatedScores: [String] = []
 
-    // UI States
-    @State private var showError: Bool = false
-    @State private var errorMessage: String = ""
-    @State private var isEditing: Bool = false
+    // Alerts / navigation
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
     @State private var navigateToLeaderboard = false
 
-    // Swipe Actions
-    @State private var playerToRenameIndex: Int? = nil
-    @State private var newName: String = ""
-    @State private var showRenameAlert: Bool = false
+    // Inline scoreboard edit mode
+    @State private var isEditingScoreboard = false
+    @State private var editedTotals: [UUID: String] = [:]
+    @State private var originalTotals: [UUID: Int] = [:]
 
-    @State private var showDeleteConfirmation: Bool = false
-    @State private var indexToDelete: Int? = nil
+    // Focus (used to dismiss keyboard reliably)
+    @FocusState private var focusedField: Field?
+    private enum Field: Hashable {
+        case bid(Int)
+        case tricks(Int)
+        case bonus(Int)
+        case scoreboard(UUID)
+    }
 
     var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 16) {
+        ScrollView {
+            VStack(spacing: 18) {
+                headerSection
+                roundPill
+                roundInputCard
+                scoreboardCard
+                Spacer(minLength: 18)
+            }
+            .padding()
+            .frame(maxWidth: 650)
+            .frame(maxWidth: .infinity)
+        }
+        // ✅ Swipe/tap dismissal behavior
+        .scrollDismissesKeyboard(.interactively)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            focusedField = nil
+            UIApplication.shared.endEditing()
+        }
+        .background(SkullKingTheme.backgroundGradient.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear(perform: initializeArraysIfNeeded)
+        .onChange(of: gameManager.players.count) { _, _ in
+            initializeArraysIfNeeded()
+        }
+        .alert("Error", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
+        }
+        .navigationDestination(isPresented: $navigateToLeaderboard) {
+            LeaderboardView().environmentObject(gameManager)
+        }
+        // ✅ "Done" button above number pad
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    focusedField = nil
+                    UIApplication.shared.endEditing()
+                }
+            }
+        }
+    }
 
-                    // Round Header & Reset
-                    HStack {
-                        Spacer()
-                        Text("Round \(gameManager.currentRound)")
-                            .font(.system(size: geometry.size.width * 0.07, weight: .bold))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .foregroundColor(.blue)
-                            .padding(.leading, 16)
-                        Spacer()
-                        Button(action: resetGame) {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.system(size: geometry.size.width * 0.06))
-                                .foregroundColor(.red)
-                                .padding()
-                        }
+    // MARK: - Header
+
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
+                Image(systemName: "flag.checkered.2.crossed")
+                    .foregroundColor(SkullKingTheme.accentGold)
+                    .font(.title3)
+
+                Text("Round Scoring")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundColor(SkullKingTheme.textPrimary)
+            }
+
+            Text("Enter bids, tricks, and bonuses for each player.")
+                .font(.subheadline)
+                .foregroundColor(SkullKingTheme.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 6)
+    }
+
+    // MARK: - Round pill
+
+    private var roundPill: some View {
+        HStack {
+            Text("Round \(gameManager.currentRound)")
+                .font(.headline)
+                .foregroundColor(SkullKingTheme.textPrimary)
+
+            Spacer()
+
+            Text("of \(gameManager.maxRounds)")
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(SkullKingTheme.textSecondary)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.white.opacity(0.06))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                )
+        )
+    }
+
+    // MARK: - Round input card
+
+    private var roundInputCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Round Input")
+                    .font(.headline)
+                    .foregroundColor(SkullKingTheme.textPrimary)
+
+                Spacer()
+
+                HStack(spacing: 10) {
+                    legendDot("Bid")
+                    legendDot("Tricks")
+                    legendDot("Bonus")
+                }
+                .font(.caption)
+                .foregroundColor(SkullKingTheme.textSecondary)
+            }
+
+            Divider().overlay(SkullKingTheme.divider)
+
+            VStack(spacing: 12) {
+                ForEach(gameManager.players.indices, id: \.self) { i in
+                    playerInputRow(index: i)
+
+                    if i != gameManager.players.indices.last {
+                        Divider().overlay(SkullKingTheme.divider)
                     }
+                }
+            }
 
-                    // Input Fields Per Player
-                    ForEach(0..<gameManager.players.count, id: \.self) { index in
-                        VStack(spacing: 8) {
-                            Text(gameManager.players[index].name)
+            Button {
+                submitScores()
+            } label: {
+                Text("Submit Round")
+            }
+            .buttonStyle(SkullKingPrimaryButtonStyle())
+            .padding(.top, 4)
+        }
+        .padding(18)
+        .background(SkullKingTheme.cardBackground(isWinner: false))
+    }
+
+    private func playerInputRow(index: Int) -> some View {
+        let player = gameManager.players[index]
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(player.name)
+                    .font(.headline)
+                    .foregroundColor(SkullKingTheme.textPrimary)
+
+                Spacer()
+
+                Text("\(player.totalScore)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(SkullKingTheme.textSecondary)
+                    .monospacedDigit()
+            }
+
+            HStack(spacing: 10) {
+                smallNumberField(
+                    title: "Bid",
+                    placeholder: "0",
+                    text: binding(for: $bids, index: index),
+                    focused: .bid(index)
+                )
+
+                smallNumberField(
+                    title: "Tricks",
+                    placeholder: "0",
+                    text: binding(for: $tricks, index: index),
+                    focused: .tricks(index)
+                )
+
+                smallNumberField(
+                    title: "Bonus",
+                    placeholder: "0",
+                    text: binding(for: $bonuses, index: index),
+                    focused: .bonus(index)
+                )
+            }
+        }
+    }
+
+    // MARK: - Scoreboard card (INLINE EDITING)
+
+    private var scoreboardCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Scoreboard")
+                    .font(.headline)
+                    .foregroundColor(SkullKingTheme.textPrimary)
+
+                Spacer()
+
+                if isEditingScoreboard {
+                    Button("Cancel") { cancelScoreboardEdit() }
+                        .foregroundColor(SkullKingTheme.textSecondary)
+
+                    Button("Save") { saveScoreboardEdit() }
+                        .foregroundColor(SkullKingTheme.accentGold)
+                        .font(.headline)
+                } else {
+                    Button("Edit Scores") { beginScoreboardEdit() }
+                        .foregroundColor(SkullKingTheme.accentGold)
+                        .font(.subheadline.weight(.semibold))
+                }
+            }
+
+            Divider().overlay(SkullKingTheme.divider)
+
+            VStack(spacing: 10) {
+                ForEach(Array(sortedPlayers.enumerated()), id: \.element.id) { (rank, player) in
+                    HStack(spacing: 12) {
+                        Text("\(rank + 1).")
+                            .font(.headline)
+                            .foregroundColor(SkullKingTheme.textSecondary)
+                            .frame(width: 28, alignment: .leading)
+
+                        Text(player.name)
+                            .font(.headline)
+                            .foregroundColor(SkullKingTheme.textPrimary)
+
+                        Spacer()
+
+                        if isEditingScoreboard {
+                            TextField(
+                                "0",
+                                text: Binding(
+                                    get: { editedTotals[player.id] ?? "\(player.totalScore)" },
+                                    set: { editedTotals[player.id] = $0 }
+                                )
+                            )
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundColor(SkullKingTheme.textPrimary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .frame(width: 110)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color.white.opacity(0.06))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            )
+                            .focused($focusedField, equals: .scoreboard(player.id)) // ✅ enables outside-tap dismiss
+                        } else {
+                            Text("\(player.totalScore)")
                                 .font(.headline)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.leading, 16)
-
-                            HStack(spacing: 12) {
-                                TextField("Bid", text: binding(for: $bids, index: index))
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                TextField("Tricks", text: binding(for: $tricks, index: index))
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                TextField("Bonus", text: binding(for: $bonuses, index: index))
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                            }
+                                .foregroundColor(rank == 0 ? SkullKingTheme.accentGold : SkullKingTheme.textPrimary)
+                                .monospacedDigit()
                         }
                     }
 
-                    Divider().padding(.vertical, 8)
-
-                    // Scoreboard List with Edit/Swipe
-                    VStack {
-                        Text("Scoreboard")
-                            .font(.title2).bold()
-                            .padding(.top)
-
-                        List {
-                            ForEach(0..<gameManager.players.count, id: \.self) { index in
-                                HStack {
-                                    Text(gameManager.players[index].name)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(.leading, 16)
-
-                                    Spacer()
-
-                                    if isEditing {
-                                        TextField("Score", text: binding(for: $updatedScores, index: index))
-                                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                                            .frame(width: 100)
-                                            .keyboardType(.numberPad)
-                                    } else {
-                                        Text("\(gameManager.players[index].totalScore)")
-                                    }
-                                }
-                                // Swipe Actions
-                                .swipeActions(edge: .trailing) {
-                                    Button(role: .destructive) {
-                                        indexToDelete = index
-                                        showDeleteConfirmation = true
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-
-                                    Button {
-                                        showRenamePrompt(for: index)
-                                    } label: {
-                                        Label("Rename", systemImage: "pencil")
-                                    }
-                                    .tint(.blue)
-                                }
-                            }
-                        }
-                        .frame(height: 250)
-                    }
-                    .padding()
-
-                    // Score Actions (Edit & Submit)
-                    HStack(spacing: 16) {
-                        // Toggle edit mode for scores
-                        Button(action: toggleEditMode) {
-                            Text(isEditing ? "Done Editing" : "Edit Score")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(isEditing ? Color.green : Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                        }
-
-                        // Submit scores for current round
-                        Button(action: submitScores) {
-                            Text("Submit Scores")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(gameManager.currentRound > gameManager.maxRounds ? Color.gray : Color.green)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                        }
-                        .disabled(gameManager.currentRound > gameManager.maxRounds)
-                    }
-
-                    // Navigation
-                    .navigationDestination(isPresented: $navigateToLeaderboard) {
-                        LeaderboardView().environmentObject(gameManager)
-                    }
-                }
-                .padding()
-
-                // Alerts
-                .alert(isPresented: $showError) {
-                    Alert(title: Text("Error"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
-                }
-
-                .alert("Rename Player", isPresented: $showRenameAlert, actions: {
-                    TextField("New name", text: $newName)
-                    Button("Save") {
-                        if let index = playerToRenameIndex {
-                            gameManager.players[index].name = newName
-                        }
-                    }
-                    Button("Cancel", role: .cancel) {}
-                }, message: {
-                    Text("Enter a new name for this player.")
-                })
-
-                .alert("Delete Player?", isPresented: $showDeleteConfirmation, actions: {
-                    Button("Delete", role: .destructive) {
-                        if let index = indexToDelete {
-                            gameManager.players.remove(at: index)
-                            updatedScores.remove(at: index)
-                            bids.remove(at: index)
-                            tricks.remove(at: index)
-                            bonuses.remove(at: index)
-                        }
-                    }
-                    Button("Cancel", role: .cancel) {}
-                }, message: {
-                    Text("Are you sure you want to remove this player and their score?")
-                })
-
-                // Initialize input arrays when view appears
-                .onAppear {
-                    if bids.isEmpty {
-                        initializeEntries()
-                        initializeEditableScores()
+                    if rank != sortedPlayers.indices.last {
+                        Divider().overlay(SkullKingTheme.divider)
                     }
                 }
             }
         }
+        .padding(18)
+        .background(SkullKingTheme.cardBackground(isWinner: false))
     }
 
-    // Submit Score Logic
-    private func submitScores() {
-        let totalTricks = tricks.compactMap { Int($0) }.reduce(0, +)
+    private var sortedPlayers: [Player] {
+        gameManager.players.sorted { $0.totalScore > $1.totalScore }
+    }
 
-        // Validate tricks match round number
-        if totalTricks > gameManager.currentRound {
-            showError = true
-            errorMessage = "Total tricks (\(totalTricks)) cannot exceed the round number (\(gameManager.currentRound))."
-            return
-        }
+    // MARK: - Scoreboard edit helpers
 
-        var scores = [Int]()
-        var bonusValues = [Int]()
+    private func beginScoreboardEdit() {
+        isEditingScoreboard = true
+        originalTotals = Dictionary(uniqueKeysWithValues: gameManager.players.map { ($0.id, $0.totalScore) })
+        editedTotals = Dictionary(uniqueKeysWithValues: gameManager.players.map { ($0.id, "\($0.totalScore)") })
+    }
 
-        // Validate and calculate scores
-        for i in 0..<gameManager.players.count {
-            guard let bid = Int(bids[i]), let trick = Int(tricks[i]) else {
-                showError = true
-                errorMessage = "Invalid input for \(gameManager.players[i].name)."
-                return
+    private func cancelScoreboardEdit() {
+        for i in gameManager.players.indices {
+            if let original = originalTotals[gameManager.players[i].id] {
+                gameManager.players[i].totalScore = original
             }
-            let bonus = Int(bonuses[i]) ?? 0
-            scores.append(gameManager.calculateScore(bid: bid, tricks: trick, bonus: bonus))
-            bonusValues.append(bonus)
         }
+        isEditingScoreboard = false
+        focusedField = nil
+        UIApplication.shared.endEditing()
+    }
 
-        gameManager.addRoundScores(scores: scores, bonuses: bonusValues)
-        resetEntries()
+    private func saveScoreboardEdit() {
+        for i in gameManager.players.indices {
+            let id = gameManager.players[i].id
+            let raw = (editedTotals[id] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Navigate to leaderboard if game is complete
-        if gameManager.currentRound > gameManager.maxRounds {
-            navigateToLeaderboard = true
+            if let newTotal = Int(raw) {
+                gameManager.players[i].totalScore = newTotal
+            } else if let original = originalTotals[id] {
+                // invalid input -> revert just that player
+                gameManager.players[i].totalScore = original
+            }
+        }
+        isEditingScoreboard = false
+        focusedField = nil
+        UIApplication.shared.endEditing()
+    }
+
+    // MARK: - UI helpers
+
+    private func legendDot(_ text: String) -> some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(Color.white.opacity(0.22))
+                .frame(width: 6, height: 6)
+            Text(text)
         }
     }
 
-    // Game State Helpers
-    private func resetGame() {
-        gameManager.resetGame()
-        resetEntries()
+    private func smallNumberField(
+        title: String,
+        placeholder: String,
+        text: Binding<String>,
+        focused: Field
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundColor(SkullKingTheme.textSecondary)
+
+            ZStack(alignment: .leading) {
+                if text.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(placeholder)
+                        .foregroundColor(SkullKingTheme.textSecondary.opacity(0.8))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                }
+
+                TextField("", text: text)
+                    .keyboardType(.numberPad)
+                    .foregroundColor(SkullKingTheme.textPrimary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .focused($focusedField, equals: focused) // ✅ enables outside-tap dismiss
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.white.opacity(focusedField == focused ? 0.10 : 0.06))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(
+                        focusedField == focused
+                        ? SkullKingTheme.accentGold.opacity(0.35)
+                        : Color.white.opacity(0.10),
+                        lineWidth: 1
+                    )
+            )
+        }
+        .frame(maxWidth: .infinity)
     }
 
-    private func initializeEntries() {
+    // MARK: - Data helpers
+
+    private func initializeArraysIfNeeded() {
         let count = gameManager.players.count
-        bids = Array(repeating: "", count: count)
-        tricks = Array(repeating: "", count: count)
-        bonuses = Array(repeating: "", count: count)
-    }
-
-    private func resetEntries() {
-        bids = Array(repeating: "", count: gameManager.players.count)
-        tricks = Array(repeating: "", count: gameManager.players.count)
-        bonuses = Array(repeating: "", count: gameManager.players.count)
-    }
-
-    private func initializeEditableScores() {
-        updatedScores = gameManager.players.map { "\($0.totalScore)" }
-    }
-
-    private func toggleEditMode() {
-        if isEditing {
-            for (index, scoreText) in updatedScores.enumerated() {
-                gameManager.players[index].totalScore = Int(scoreText) ?? gameManager.players[index].totalScore
-            }
-        } else {
-            initializeEditableScores()
+        if bids.count != count {
+            bids = Array(repeating: "", count: count)
+            tricks = Array(repeating: "", count: count)
+            bonuses = Array(repeating: "0", count: count)
         }
-        isEditing.toggle()
     }
 
-    private func showRenamePrompt(for index: Int) {
-        playerToRenameIndex = index
-        newName = gameManager.players[index].name
-        showRenameAlert = true
-    }
-
-    // Binding Helper
-    /// Ensures safe binding access for dynamic array fields
     private func binding(for array: Binding<[String]>, index: Int) -> Binding<String> {
-        return Binding(
-            get: { array.wrappedValue.indices.contains(index) ? array.wrappedValue[index] : "" },
-            set: { value in
+        Binding(
+            get: {
+                guard array.wrappedValue.indices.contains(index) else { return "" }
+                return array.wrappedValue[index]
+            },
+            set: { newValue in
                 if array.wrappedValue.indices.contains(index) {
-                    array.wrappedValue[index] = value
+                    array.wrappedValue[index] = newValue
                 }
             }
         )
+    }
+
+    // MARK: - Submit round (USES YOUR GameManager API)
+
+    private func submitScores() {
+        initializeArraysIfNeeded()
+
+        var roundScores: [Int] = []
+
+        for i in gameManager.players.indices {
+            let bid = Int(bids[i]) ?? 0
+            let tricksWon = Int(tricks[i]) ?? 0
+            let bonus = Int(bonuses[i]) ?? 0
+
+            let score = gameManager.calculateScore(
+                bid: bid,
+                tricksWon: tricksWon,
+                bonus: bonus
+            )
+
+            roundScores.append(score)
+        }
+
+        gameManager.addRound(scores: roundScores)
+
+        // reset for next round
+        bids = Array(repeating: "", count: gameManager.players.count)
+        tricks = Array(repeating: "", count: gameManager.players.count)
+        bonuses = Array(repeating: "0", count: gameManager.players.count)
+
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+
+        // dismiss keyboard after submitting
+        focusedField = nil
+        UIApplication.shared.endEditing()
+
+        if gameManager.isGameOver {
+            navigateToLeaderboard = true
+        }
     }
 }

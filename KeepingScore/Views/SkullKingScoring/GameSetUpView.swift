@@ -1,129 +1,184 @@
 import SwiftUI
-
-// GameSetupView
-/// View where players are added before starting the Skull King game.
-/// Supports between 2 to 8 players and validates input before launching the game.
+/// Add players and start the Skull King game.
+/// UI themed to SkullKingTheme. No scoring logic changes.
 struct GameSetupView: View {
-    @EnvironmentObject var gameManager: GameManager // Shared game state
-    @State private var playerNames: [String] = ["", ""] // At least 2 player fields to start
+    @EnvironmentObject var gameManager: GameManager
+    @State private var playerNames: [String] = ["", ""]
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
-
+    @State private var navigateToScoreboard = false
     var body: some View {
-        GeometryReader { geo in
-            ScrollView {
-                VStack(spacing: 24) {
-                    
-                    // Title
-                    Text("Ahoy! Enter Ye Crew")
-                        .font(.custom("Lodeh Regular", size: geo.size.width < 500 ? 28 : 36))
-                        .padding(.top)
-
-                    // Player Inputs
-                    VStack(spacing: 12) {
-                        ForEach(0..<playerNames.count, id: \.self) { index in
-                            TextField("Player \(index + 1)", text: $playerNames[index])
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .frame(height: 44)
-                                .padding(.horizontal)
-                        }
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(12)
-                    .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
-
-                    // Add / Remove Player Buttons
-                    HStack(spacing: 16) {
-                        // Add player if under 8 total
-                        Button(action: addPlayer) {
-                            Text("Add Player")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(playerNames.count < 8 ? Color.green : Color.gray)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                        }
-                        .disabled(playerNames.count >= 8)
-
-                        // Remove player if more than 2 total
-                        Button(action: removePlayer) {
-                            Text("Remove Player")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(playerNames.count > 2 ? Color.gray : Color.gray.opacity(0.5))
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                        }
-                        .disabled(playerNames.count <= 2)
-                    }
-
-                    // Start Game Button
-                    Button(action: validateAndStartGame) {
-                        Text("Start Game")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
-                    // Navigates when gameManager.isGameStarted becomes true
-                    .navigationDestination(isPresented: $gameManager.isGameStarted) {
-                        ScoreInputAndScoreboardView()
-                            .environmentObject(gameManager)
-                    }
-
-                    Spacer(minLength: 40)
+        ScrollView {
+            VStack(spacing: 20) {
+                header
+                playersCard
+                roundsCard
+                Button {
+                    startGame()
+                } label: {
+                    Text("Start Game")
                 }
-                .frame(maxWidth: 600) // Limits width for larger devices like iPads
-                .padding()
-                .frame(width: geo.size.width)
+                .buttonStyle(SkullKingPrimaryButtonStyle())
+                .padding(.top, 6)
+                // Navigation (kept minimal to avoid behavior changes)
+                NavigationLink(
+                    destination: ScoreInputAndScoreboardView().environmentObject(gameManager),
+                    isActive: $navigateToScoreboard
+                ) { EmptyView() }
+                .hidden()
+                Spacer(minLength: 24)
             }
+            .padding()
+            .frame(maxWidth: 650)
+            .frame(maxWidth: .infinity)
         }
-
-        // Error Alert
-        .alert(isPresented: $showError) {
-            Alert(
-                title: Text("Error"),
-                message: Text(errorMessage),
-                dismissButton: .default(Text("OK"))
-            )
-        }
-        .navigationTitle("Game Setup")
-    }
-
-    // Logic Functions
-
-    /// Adds a new blank player slot if the count is under 8
-    private func addPlayer() {
-        if playerNames.count < 8 {
-            playerNames.append("")
-            print("Added player slot. Total players: \(playerNames.count)")
+        .background(SkullKingTheme.backgroundGradient.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
         }
     }
-
-    /// Removes the last player slot if the count is above 2
-    private func removePlayer() {
-        if playerNames.count > 2 {
-            playerNames.removeLast()
-            print("Removed player slot. Total players: \(playerNames.count)")
+    // MARK: - Header
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: "sailboat.fill")
+                    .foregroundColor(SkullKingTheme.accentGold)
+                    .font(.title3)
+                Text("Ahoy! Enter Ye Crew")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(SkullKingTheme.textPrimary)
+            }
+            Text("Add 2–8 players and choose how many rounds to play.")
+                .font(.subheadline)
+                .foregroundColor(SkullKingTheme.textSecondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 6)
     }
-
-    /// Validates that all player fields are filled, then starts the game
-    private func validateAndStartGame() {
-        if playerNames.contains(where: { $0.trimmingCharacters(in: .whitespaces).isEmpty }) {
-            errorMessage = "Player names cannot be empty. Please fill in all player names."
+    // MARK: - Players Card
+    private var playersCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Players", systemImage: "person.3.fill")
+                    .font(.headline)
+                    .foregroundColor(SkullKingTheme.textPrimary)
+                Spacer()
+                Text("\(playerNames.count)")
+                    .font(.subheadline)
+                    .foregroundColor(SkullKingTheme.textSecondary)
+            }
+            VStack(spacing: 10) {
+                ForEach(playerNames.indices, id: \.self) { index in
+                    skullTextField(
+                        placeholder: "Player \(index + 1)",
+                        text: $playerNames[index]
+                    )
+                }
+            }
+            HStack(spacing: 10) {
+                Button {
+                    if playerNames.count < 8 {
+                        playerNames.append("")
+                    }
+                } label: {
+                    Label("Add Player", systemImage: "plus.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                .tint(SkullKingTheme.accentGold)
+                .disabled(playerNames.count >= 8)
+                Spacer()
+                if playerNames.count > 2 {
+                    Button(role: .destructive) {
+                        playerNames.removeLast()
+                    } label: {
+                        Label("Remove Last", systemImage: "minus.circle")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(SkullKingTheme.dangerRed)
+                }
+            }
+            .padding(.top, 4)
+        }
+        .padding(18)
+        .background(SkullKingTheme.cardBackground(isWinner: false))
+    }
+    // MARK: - Rounds Card
+    private var roundsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Rounds", systemImage: "flag.checkered")
+                    .font(.headline)
+                    .foregroundColor(SkullKingTheme.textPrimary)
+                Spacer()
+            }
+            Text("Skull King is typically played in 10 rounds.")
+                .font(.caption)
+                .foregroundColor(SkullKingTheme.textSecondary)
+            Stepper {
+                Text("Max Number of Rounds: \(gameManager.maxRounds)")
+                    .foregroundColor(SkullKingTheme.textPrimary)
+                    .font(.subheadline.weight(.semibold))
+            } onIncrement: {
+                if gameManager.maxRounds < 15 { gameManager.maxRounds += 1 }
+            } onDecrement: {
+                if gameManager.maxRounds > 1 { gameManager.maxRounds -= 1 }
+            }
+            .tint(SkullKingTheme.accentGold)
+        }
+        .padding(18)
+        .background(SkullKingTheme.cardBackground(isWinner: false))
+    }
+    // MARK: - UI Helpers
+    private func skullTextField(placeholder: String, text: Binding<String>) -> some View {
+        ZStack(alignment: .leading) {
+            if text.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text(placeholder)
+                    .foregroundColor(SkullKingTheme.textSecondary.opacity(0.9))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+            }
+            TextField("", text: text)
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled()
+                .foregroundColor(SkullKingTheme.textPrimary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.white.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+        )
+    }
+    // MARK: - Logic (unchanged intent)
+    private func startGame() {
+        let trimmed = playerNames
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard trimmed.count >= 2 else {
+            errorMessage = "You need at least 2 player names."
             showError = true
             return
         }
-
-        // Filter out empty names and convert to Player objects
-        gameManager.players = playerNames
-            .filter { !$0.isEmpty }
-            .map { Player(name: $0) }
-
+        gameManager.players = trimmed.map { Player(name: $0) }
+        gameManager.currentRound = 1
         gameManager.isGameStarted = true
-        print("Game started with players: \(gameManager.players.map { $0.name })")
+        gameManager.isGameOver = false
+        navigateToScoreboard = true
     }
 }
+#Preview {
+    NavigationStack {
+        GameSetupView()
+            .environmentObject(GameManager())
+    }
+}
+

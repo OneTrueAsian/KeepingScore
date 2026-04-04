@@ -1,93 +1,206 @@
 import SwiftUI
-
 // LeaderboardView
 /// Displays the final scores at the end of the game.
 /// Players are ranked from highest to lowest score.
 /// Options provided to go back to setup or restart the game.
 struct LeaderboardView: View {
     @EnvironmentObject var gameManager: GameManager
-
+    @EnvironmentObject var tournamentStore: TournamentStore
+    @Environment(\.dismiss) private var dismiss
     // Navigation triggers
     @State private var navigateBackToPlayerSetup = false
     @State private var navigateToScoreboard = false
-
+    @State private var showTieAlert = false
+    private var sortedPlayers: [Player] {
+        gameManager.players.sorted { $0.totalScore > $1.totalScore }
+    }
     var body: some View {
         NavigationStack {
             GeometryReader { geo in
                 ScrollView {
-                    VStack(spacing: 24) {
-
-                        // Title
-                        Text("Leaderboard")
-                            .font(.system(size: geo.size.width < 500 ? 28 : 36, weight: .bold))
-                            .padding(.top)
-
-                        // Leaderboard List
-                        let sortedPlayers = gameManager.players.sorted { $0.totalScore > $1.totalScore }
-
-                        VStack(spacing: 8) {
-                            ForEach(sortedPlayers, id: \.id) { player in
-                                HStack {
-                                    Text(player.name)
-                                        .font(.headline)
-                                    Spacer()
-                                    Text("\(player.totalScore) pts")
-                                        .fontWeight(.bold)
-                                }
-                                .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(10)
-                                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
-                            }
+                    VStack(spacing: 20) {
+                        header(geo: geo)
+                        // Winner Card (top 1)
+                        if let winner = sortedPlayers.first {
+                            winnerCard(winner, geo: geo)
+                                .padding(.horizontal)
                         }
-                        .padding(.horizontal)
-
-                        // Action Buttons
-                        HStack(spacing: 16) {
-                            // Done button returns to player setup screen
-                            Button("Done") {
-                                gameManager.isGameStarted = false
-                                navigateBackToPlayerSetup = true
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-
-                            // Restart button keeps players but resets scores/round
-                            Button("Restart") {
-                                gameManager.resetGame()
-                                navigateToScoreboard = true
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.red)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 8)
-
-                        Spacer(minLength: 40)
+                        // Ranks list
+                        ranksList
+                            .padding(.horizontal)
+                        // Actions
+                        actionButtons
+                            .padding(.horizontal)
+                            .padding(.top, 6)
+                        Spacer(minLength: 28)
                     }
-                    .frame(maxWidth: 600)
-                    .padding(.bottom)
+                    .frame(maxWidth: 650)
                     .frame(width: geo.size.width)
+                    .padding(.top, 18)
+                    .padding(.bottom, 40)
                 }
+                .background(
+                    SkullKingTheme.backgroundGradient
+                        .ignoresSafeArea()
+                )
             }
-            .navigationBarHidden(true)
-
+            .navigationBarBackButtonHidden(false)
             // Navigation
-            // Navigate to player setup
             .navigationDestination(isPresented: $navigateBackToPlayerSetup) {
                 GameSetupView().environmentObject(gameManager)
             }
-
-            // Navigate back into the scoreboard to continue playing
             .navigationDestination(isPresented: $navigateToScoreboard) {
                 ScoreInputAndScoreboardView().environmentObject(gameManager)
             }
+            .alert("It's a Tie!", isPresented: $showTieAlert) {
+                Button("OK") {
+                    if let context = gameManager.tournamentMatchContext {
+                        tournamentStore.tieMatchId = context.matchId
+                        gameManager.tournamentMatchContext = nil
+                    }
+                    // No dismiss — TournamentMatchDetailView pops its children and stays in the stack
+                }
+            } message: {
+                Text("Scores are equal — ties are not allowed. Another match is needed to determine the winner.")
+            }
         }
     }
+    // MARK: - Header
+    private func header(geo: GeometryProxy) -> some View {
+        VStack(spacing: 6) {
+            Text("Leaderboard")
+                .font(.headline)
+                .foregroundColor(SkullKingTheme.textSecondary)
+            Text("Final Scores")
+                .font(.system(size: geo.size.width < 500 ? 44 : 54, weight: .bold))
+                .foregroundColor(SkullKingTheme.textPrimary)
+        }
+        .padding(.top, 8)
+        .padding(.bottom, 6)
+    }
+    // MARK: - Winner Card
+    private func winnerCard(_ player: Player, geo: GeometryProxy) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "crown.fill")
+                    .foregroundColor(SkullKingTheme.accentGold)
+                    .font(.title3)
+                Text("Skull King")
+                    .font(.headline)
+                    .foregroundColor(SkullKingTheme.accentGold)
+                Spacer()
+                Text("\(player.totalScore)")
+                    .font(.title2.bold())
+                    .foregroundColor(SkullKingTheme.accentGold)
+                    .monospacedDigit()
+            }
+            Divider().overlay(SkullKingTheme.divider)
+            HStack {
+                Text(player.name)
+                    .font(.title3.weight(.semibold))
+                    .foregroundColor(SkullKingTheme.textPrimary)
+                Spacer()
+                Text("1st")
+                    .font(.headline)
+                    .foregroundColor(SkullKingTheme.textSecondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color.white.opacity(0.08))
+                    )
+            }
+        }
+        .padding(18)
+        .background(SkullKingTheme.cardBackground(isWinner: true))
+    }
+    // MARK: - Ranks List
+    private var ranksList: some View {
+        VStack(spacing: 10) {
+            ForEach(Array(sortedPlayers.enumerated()), id: \.element.id) { (index, player) in
+                // Skip winner here because we show a dedicated winner card
+                if index == 0 { EmptyView() } else {
+                    rankRow(rank: index + 1, player: player)
+                }
+            }
+        }
+    }
+    private func rankRow(rank: Int, player: Player) -> some View {
+        HStack(spacing: 12) {
+            Text("\(rank).")
+                .font(.headline)
+                .foregroundColor(SkullKingTheme.textSecondary)
+                .frame(width: 28, alignment: .leading)
+            Text(player.name)
+                .font(.headline)
+                .foregroundColor(SkullKingTheme.textPrimary)
+            Spacer()
+            Text("\(player.totalScore)")
+                .font(.headline)
+                .foregroundColor(SkullKingTheme.textPrimary)
+                .monospacedDigit()
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .background(SkullKingTheme.cardBackground(isWinner: false))
+    }
+    // MARK: - Actions
+    private var actionButtons: some View {
+        VStack(spacing: 10) {
+            if let context = gameManager.tournamentMatchContext {
+                Button {
+                    recordTournamentResult(context: context)
+                } label: {
+                    Text("Record Match Result & Return")
+                }
+                .buttonStyle(SkullKingPrimaryButtonStyle())
+            } else {
+                Button {
+                    // Play again with same players
+                    gameManager.resetGame()
+                    navigateToScoreboard = true
+                } label: {
+                    Text("Play Again with Same Players")
+                }
+                .buttonStyle(SkullKingPrimaryButtonStyle())
+                Button {
+                    // New game / change players
+                    gameManager.isGameStarted = false
+                    navigateBackToPlayerSetup = true
+                } label: {
+                    Text("New Game / Change Players")
+                }
+                .buttonStyle(SkullKingDestructiveButtonStyle())
+            }
+        }
+    }
+
+    private func recordTournamentResult(context: TournamentMatchContext) {
+        // Tie check — top two players share the same score
+        if sortedPlayers.count >= 2 && sortedPlayers[0].totalScore == sortedPlayers[1].totalScore {
+            showTieAlert = true
+            return
+        }
+
+        guard let winner = sortedPlayers.first,
+              let winnerParticipantId = context.participantsByName[winner.name] else { return }
+
+        let scoresByParticipantId = Dictionary(
+            uniqueKeysWithValues: gameManager.players.compactMap { player -> (UUID, Int)? in
+                guard let pid = context.participantsByName[player.name] else { return nil }
+                return (pid, player.totalScore)
+            }
+        )
+
+        tournamentStore.recordMatchResult(
+            tournamentId: context.tournamentId,
+            matchId: context.matchId,
+            winnerParticipantId: winnerParticipantId,
+            scores: scoresByParticipantId
+        )
+
+        gameManager.tournamentMatchContext = nil
+        dismiss()
+    }
 }
+
