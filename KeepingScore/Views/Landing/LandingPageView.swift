@@ -15,7 +15,6 @@ struct GameItem: Identifiable {
 /// Main landing page where users choose which score tracker to use.
 struct LandingPageView: View {
 
-    /// Home screen cards for each game mode currently supported by the app.
     private let items: [GameItem] = [
         .init(
             title: "Simple Scoring",
@@ -31,13 +30,13 @@ struct LandingPageView: View {
         ),
         .init(
             title: "Tournament",
-            subtitle: "Run tournament events",
+            subtitle: "Run tournament and events",
             icon: "trophy.circle.fill",
             isCustomImage: false
         ),
         .init(
             title: "Monopoly",
-            subtitle: "Track cash, properties & trades",
+            subtitle: "Track cash, properties, & trades",
             icon: "dollarsign.circle.fill",
             isCustomImage: false
         )
