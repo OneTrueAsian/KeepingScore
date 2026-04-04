@@ -22,7 +22,6 @@ struct TournamentView: View {
         }
         .padding()
         .background(Color.scoreBackground.ignoresSafeArea())
-        .navigationTitle("Tournament")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

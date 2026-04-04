@@ -136,7 +136,6 @@ struct TournamentSetupView: View {
         }
         .padding(.top, 8)
         .background(Color.scoreBackground.ignoresSafeArea())
-        .navigationTitle("Tournament")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {

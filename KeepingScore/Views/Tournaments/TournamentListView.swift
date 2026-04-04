@@ -47,7 +47,6 @@ struct TournamentListView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Color.scoreBackground)
-        .navigationTitle("Tournaments")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {

@@ -34,7 +34,6 @@ struct SimpleScoringView: View {
             .padding()
         }
         .background(Color.scoreBackground.ignoresSafeArea())
-        .navigationTitle("Simple Scoring")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color.scoreBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
@@ -98,17 +97,33 @@ struct SimpleScoringView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundColor(Color.scorePrimary)
 
-                    Text("No max rounds – play until you're done.")
+                    Text("Toggle to turn on indefinite rounds - play til you drop!")
                         .font(.caption)
                         .foregroundColor(Color.scorePrimary.opacity(0.75))
                 }
 
                 Spacer()
 
-                // Standard iOS toggle, ON = orange (from your palette)
                 Toggle("", isOn: $isIndefiniteRounds)
                     .labelsHidden()
                     .toggleStyle(SwitchToggleStyle(tint: Color.scoreSecondaryAction))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(isIndefiniteRounds
+                                  ? Color.scoreSecondaryAction.opacity(0.18)
+                                  : Color.scoreBackground)
+                    )
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .stroke(
+                                isIndefiniteRounds
+                                ? Color.scoreSecondaryAction.opacity(0.45)
+                                : Color.scorePrimary.opacity(0.2),
+                                lineWidth: 1
+                            )
+                    )
             }
 
             if !isIndefiniteRounds {

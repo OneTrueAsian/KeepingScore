@@ -63,7 +63,6 @@ struct ScoreInputAndScoreboardView: View {
             UIApplication.shared.endEditing()
         }
         .background(SkullKingTheme.backgroundGradient.ignoresSafeArea())
-        .navigationTitle("Skull King Scores")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: initializeArraysIfNeeded)
         .onChange(of: gameManager.players.count) { _, _ in

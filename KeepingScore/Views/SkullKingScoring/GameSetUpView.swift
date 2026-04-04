@@ -33,7 +33,6 @@ struct GameSetupView: View {
             .frame(maxWidth: .infinity)
         }
         .background(SkullKingTheme.backgroundGradient.ignoresSafeArea())
-        .navigationTitle("Skull King Setup")
         .navigationBarTitleDisplayMode(.inline)
         .alert("Error", isPresented: $showError) {
             Button("OK", role: .cancel) { }

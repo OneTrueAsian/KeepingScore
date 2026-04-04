@@ -58,7 +58,6 @@ struct TournamentMatchDetailView: View {
             .padding(.top, 8)
         }
         .background(Color.scoreBackground.ignoresSafeArea())
-        .navigationTitle("Match")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $goToScoring) {
             scoringDestination()

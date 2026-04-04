@@ -64,7 +64,6 @@ struct TournamentParticipantsView: View {
         .padding(.horizontal)
         .padding(.top, 12)
         .background(Color.scoreBackground.ignoresSafeArea())
-        .navigationTitle("Participants")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
