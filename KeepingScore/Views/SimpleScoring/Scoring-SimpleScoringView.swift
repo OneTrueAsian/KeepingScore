@@ -22,6 +22,7 @@ struct ScoringView: View {
 
     // Alerts
     @State private var showCompletionAlert = false
+    @State private var showTieAlert = false
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
 
@@ -181,6 +182,11 @@ struct ScoringView: View {
         } message: {
             Text("All rounds have been completed.")
         }
+        .alert("It's a Tie!", isPresented: $showTieAlert) {
+            Button("OK") { }
+        } message: {
+            Text("Scores are equal. The board has been reset — play another round to determine the winner.")
+        }
         .alert("Error", isPresented: $showErrorAlert) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -218,24 +224,36 @@ struct ScoringView: View {
             currentRound += 1
         } else {
             if currentRound >= totalRounds {
-                lastRoundSubmitted = true
-                if let context = tournamentContext,
-                   let winnerName = players.max(by: { scores[$0, default: 0] < scores[$1, default: 0] }),
-                   let winnerParticipantId = context.participantsByName[winnerName] {
-                    let scoresByParticipantId = Dictionary(
-                        uniqueKeysWithValues: players.compactMap { name -> (UUID, Int)? in
-                            guard let pid = context.participantsByName[name] else { return nil }
-                            return (pid, scores[name, default: 0])
-                        }
-                    )
-                    tournamentStore.recordMatchResult(
-                        tournamentId: context.tournamentId,
-                        matchId: context.matchId,
-                        winnerParticipantId: winnerParticipantId,
-                        scores: scoresByParticipantId
-                    )
+                if let context = tournamentContext {
+                    let highScore = players.compactMap { scores[$0] }.max() ?? 0
+                    let tied = players.filter { scores[$0, default: 0] == highScore }
+                    if tied.count > 1 {
+                        // Reset board in place — user plays again without leaving
+                        scores = Dictionary(uniqueKeysWithValues: players.map { ($0, 0) })
+                        enteredPoints = [:]
+                        currentRound = 1
+                        lastRoundSubmitted = false
+                        showTieAlert = true
+                    } else if let winnerName = tied.first,
+                              let winnerParticipantId = context.participantsByName[winnerName] {
+                        let scoresByParticipantId = Dictionary(
+                            uniqueKeysWithValues: players.compactMap { name -> (UUID, Int)? in
+                                guard let pid = context.participantsByName[name] else { return nil }
+                                return (pid, scores[name, default: 0])
+                            }
+                        )
+                        tournamentStore.recordMatchResult(
+                            tournamentId: context.tournamentId,
+                            matchId: context.matchId,
+                            winnerParticipantId: winnerParticipantId,
+                            scores: scoresByParticipantId
+                        )
+                        dismiss()
+                    }
+                } else {
+                    lastRoundSubmitted = true
+                    showCompletionAlert = true
                 }
-                showCompletionAlert = true
             } else {
                 currentRound += 1
             }

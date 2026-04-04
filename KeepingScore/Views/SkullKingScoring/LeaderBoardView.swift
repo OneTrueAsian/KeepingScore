@@ -10,6 +10,7 @@ struct LeaderboardView: View {
     // Navigation triggers
     @State private var navigateBackToPlayerSetup = false
     @State private var navigateToScoreboard = false
+    @State private var showTieAlert = false
     private var sortedPlayers: [Player] {
         gameManager.players.sorted { $0.totalScore > $1.totalScore }
     }
@@ -50,6 +51,17 @@ struct LeaderboardView: View {
             }
             .navigationDestination(isPresented: $navigateToScoreboard) {
                 ScoreInputAndScoreboardView().environmentObject(gameManager)
+            }
+            .alert("It's a Tie!", isPresented: $showTieAlert) {
+                Button("OK") {
+                    if let context = gameManager.tournamentMatchContext {
+                        tournamentStore.tieMatchId = context.matchId
+                        gameManager.tournamentMatchContext = nil
+                    }
+                    // No dismiss — TournamentMatchDetailView pops its children and stays in the stack
+                }
+            } message: {
+                Text("Scores are equal — ties are not allowed. Another match is needed to determine the winner.")
             }
         }
     }
@@ -164,6 +176,12 @@ struct LeaderboardView: View {
     }
 
     private func recordTournamentResult(context: TournamentMatchContext) {
+        // Tie check — top two players share the same score
+        if sortedPlayers.count >= 2 && sortedPlayers[0].totalScore == sortedPlayers[1].totalScore {
+            showTieAlert = true
+            return
+        }
+
         guard let winner = sortedPlayers.first,
               let winnerParticipantId = context.participantsByName[winner.name] else { return }
 

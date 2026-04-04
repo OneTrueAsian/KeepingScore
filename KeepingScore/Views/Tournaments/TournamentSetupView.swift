@@ -6,14 +6,19 @@ struct TournamentSetupView: View {
 
     @State private var nameText: String = ""
     @State private var selectedFormat: TournamentFormat = .singleElimination
-    @State private var expectedParticipantCount: Int = 4
+    @State private var participantCountText: String = "4"
     @State private var createdTournamentId: UUID? = nil
 
     private let minPlayers = 2
     private let maxPlayers = 32
 
+    private var expectedParticipantCount: Int? { Int(participantCountText) }
+
     private var isValid: Bool {
-        (minPlayers...maxPlayers).contains(expectedParticipantCount)
+        if let count = expectedParticipantCount {
+            return (minPlayers...maxPlayers).contains(count)
+        }
+        return false
     }
 
     var body: some View {
@@ -70,21 +75,20 @@ struct TournamentSetupView: View {
                         .font(.headline)
                         .foregroundColor(Color.scorePrimary)
 
-                    Text("\(minPlayers)–\(maxPlayers) players (MVP)")
+                    Text("\(minPlayers)–\(maxPlayers) players")
                         .font(.subheadline)
                         .foregroundColor(Color.scorePrimary.opacity(0.8))
 
-                    Stepper(value: $expectedParticipantCount, in: minPlayers...maxPlayers) {
-                        Text("\(expectedParticipantCount)")
-                            .foregroundColor(Color.scorePrimary)
-                    }
-                    .padding()
-                    .background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(Color.scorePrimary.opacity(0.15), lineWidth: 1)
-                    )
+                    TextField("Number of participants", text: $participantCountText)
+                        .keyboardType(.numberPad)
+                        .foregroundColor(.black)
+                        .padding()
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(isValid ? Color.scorePrimary.opacity(0.15) : Color.red.opacity(0.4), lineWidth: 1)
+                        )
                 }
 
                 NavigationLink(
@@ -107,7 +111,7 @@ struct TournamentSetupView: View {
                     let tournament = store.createTournament(
                         name: nameToSave,
                         format: selectedFormat,
-                        expectedParticipantCount: expectedParticipantCount
+                        expectedParticipantCount: expectedParticipantCount ?? 4
                     )
                     createdTournamentId = tournament.id
                 } label: {

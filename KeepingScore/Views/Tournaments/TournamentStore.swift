@@ -4,6 +4,10 @@ import SwiftUI
 @MainActor
 final class TournamentStore: ObservableObject {
     @Published private(set) var tournaments: [Tournament] = []
+    /// Set to the matchId when a result is recorded. Views observe this to auto-navigate back.
+    @Published var completedMatchId: UUID? = nil
+    /// Set to the matchId when a tie is detected. Match stays pending; views navigate back so user can re-score.
+    @Published var tieMatchId: UUID? = nil
 
     private let fileURL: URL
 
@@ -120,6 +124,7 @@ final class TournamentStore: ObservableObject {
 
     // MARK: - Record Match Result
 
+    /// Records a result and signals auto-navigation back to the bracket.
     func recordMatchResult(
         tournamentId: UUID,
         matchId: UUID,
@@ -138,6 +143,29 @@ final class TournamentStore: ObservableObject {
         }
         t.matches[mIdx] = match
         advanceRoundIfNeeded(tournament: &t)
+        tournaments[tIdx] = t
+        save()
+        completedMatchId = matchId
+    }
+
+    /// Updates an existing match result manually (no auto-navigation).
+    func updateMatchResult(
+        tournamentId: UUID,
+        matchId: UUID,
+        winnerParticipantId: UUID,
+        scores: [UUID: Int]? = nil
+    ) {
+        guard let tIdx = tournaments.firstIndex(where: { $0.id == tournamentId }) else { return }
+        var t = tournaments[tIdx]
+        guard let mIdx = t.matches.firstIndex(where: { $0.id == matchId }) else { return }
+
+        var match = t.matches[mIdx]
+        match.result = TournamentMatchResult(winnerParticipantId: winnerParticipantId)
+        match.status = .completed
+        if let scores = scores {
+            match.finalScoresByParticipantId = scores
+        }
+        t.matches[mIdx] = match
         tournaments[tIdx] = t
         save()
     }

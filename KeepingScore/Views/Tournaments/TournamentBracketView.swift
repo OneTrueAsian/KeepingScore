@@ -104,22 +104,34 @@ struct TournamentBracketView: View {
     }
 
     private func matchCard(match: TournamentMatch, tournament: Tournament) -> some View {
-        let aName = displayName(for: match.playerAId, in: tournament)
-        let bName = displayName(for: match.playerBId, in: tournament)
+        let aId = match.playerAId
+        let bId = match.playerBId
+        let aName = displayName(for: aId, in: tournament)
+        let bName = displayName(for: bId, in: tournament)
+        let isCompleted = match.status == .completed
+        let winnerId = match.winnerParticipantId
 
-        return VStack(alignment: .leading, spacing: 6) {
-            Text("Match \(match.matchNumber)")
-                .font(.headline)
-                .foregroundColor(Color.scorePrimary)
-
-            Text("\(aName) vs \(bName)")
-                .font(.subheadline)
-                .foregroundColor(Color.scorePrimary.opacity(0.75))
-
-            if let type = match.gameType {
-                Text("Game: \(type.displayName)")
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Match \(match.matchNumber)")
+                    .font(.headline)
+                    .foregroundColor(Color.scorePrimary)
+                Spacer()
+                Text(isCompleted ? "Completed" : "Pending")
                     .font(.caption.weight(.semibold))
-                    .foregroundColor(Color.scorePrimary.opacity(0.6))
+                    .foregroundColor(isCompleted ? .white : Color.scorePrimary.opacity(0.5))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(isCompleted ? Color.scorePrimary : Color.scorePrimary.opacity(0.1))
+                    .clipShape(Capsule())
+            }
+
+            HStack {
+                playerRow(name: aName, participantId: aId, winnerId: winnerId, scores: match.finalScoresByParticipantId)
+                Text("vs")
+                    .font(.caption)
+                    .foregroundColor(Color.scorePrimary.opacity(0.5))
+                playerRow(name: bName, participantId: bId, winnerId: winnerId, scores: match.finalScoresByParticipantId)
             }
         }
         .padding()
@@ -128,6 +140,28 @@ struct TournamentBracketView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 3)
         .contentShape(Rectangle())
+    }
+
+    private func playerRow(name: String, participantId: UUID?, winnerId: UUID?, scores: [UUID: Int]?) -> some View {
+        let isWinner = participantId != nil && participantId == winnerId
+        let score = participantId.flatMap { scores?[$0] }
+
+        return VStack(alignment: .center, spacing: 2) {
+            if isWinner {
+                Image(systemName: "crown.fill")
+                    .font(.caption2)
+                    .foregroundColor(Color.scorePrimaryAction)
+            }
+            Text(name)
+                .font(.subheadline.weight(isWinner ? .bold : .regular))
+                .foregroundColor(isWinner ? Color.scorePrimary : Color.scorePrimary.opacity(0.75))
+            if let score {
+                Text("\(score) pts")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(Color.scorePrimary.opacity(0.6))
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private func displayName(for participantId: UUID?, in tournament: Tournament) -> String {
