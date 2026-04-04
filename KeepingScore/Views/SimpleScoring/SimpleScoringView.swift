@@ -1,8 +1,15 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// SimpleScoringView
 /// Lets users configure a simple game: total rounds (or indefinite) and players.
 struct SimpleScoringView: View {
+    // MARK: Tournament context (optional — only set when launched from a tournament match)
+    var preloadedPlayers: [String] = []
+    var tournamentContext: TournamentMatchContext? = nil
+
     // MARK: State
     @State private var players: [String] = []
     @State private var newPlayer: String = ""
@@ -27,7 +34,6 @@ struct SimpleScoringView: View {
             .padding()
         }
         .background(Color.scoreBackground.ignoresSafeArea())
-        .navigationTitle("Simple Scoring")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color.scoreBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
@@ -37,10 +43,16 @@ struct SimpleScoringView: View {
         } message: {
             Text("Enter how many rounds you want to play, or turn on 'Indefinite' to just keep scoring until you stop.")
         }
+        .onAppear {
+            if !preloadedPlayers.isEmpty && players.isEmpty {
+                players = preloadedPlayers
+            }
+        }
         .navigationDestination(isPresented: $navigateToScoring) {
             ScoringView(
                 players: players,
-                totalRounds: isIndefiniteRounds ? -1 : (Int(numberOfRounds) ?? 0)
+                totalRounds: isIndefiniteRounds ? -1 : (Int(numberOfRounds) ?? 0),
+                tournamentContext: tournamentContext
             )
         }
     }
@@ -85,24 +97,40 @@ struct SimpleScoringView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundColor(Color.scorePrimary)
 
-                    Text("No max rounds – play until you're done.")
+                    Text("Toggle to turn on indefinite rounds - play til you drop!")
                         .font(.caption)
                         .foregroundColor(Color.scorePrimary.opacity(0.75))
                 }
 
                 Spacer()
 
-                // Standard iOS toggle, ON = orange (from your palette)
                 Toggle("", isOn: $isIndefiniteRounds)
                     .labelsHidden()
                     .toggleStyle(SwitchToggleStyle(tint: Color.scoreSecondaryAction))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(isIndefiniteRounds
+                                  ? Color.scoreSecondaryAction.opacity(0.18)
+                                  : Color.scoreBackground)
+                    )
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .stroke(
+                                isIndefiniteRounds
+                                ? Color.scoreSecondaryAction.opacity(0.45)
+                                : Color.scorePrimary.opacity(0.2),
+                                lineWidth: 1
+                            )
+                    )
             }
 
             if !isIndefiniteRounds {
                 styledTextField(
                     placeholder: "Number of rounds",
                     text: $numberOfRounds,
-                    keyboardType: .numberPad
+                    isNumberPad: true
                 )
             }
         }
@@ -126,7 +154,7 @@ struct SimpleScoringView: View {
                 styledTextField(
                     placeholder: "Enter player name",
                     text: $newPlayer,
-                    keyboardType: .default
+                    isNumberPad: false
                 )
 
                 Button {
@@ -185,7 +213,7 @@ struct SimpleScoringView: View {
     private func styledTextField(
         placeholder: String,
         text: Binding<String>,
-        keyboardType: UIKeyboardType
+        isNumberPad: Bool
     ) -> some View {
         ZStack(alignment: .leading) {
             if text.wrappedValue.isEmpty {
@@ -196,7 +224,7 @@ struct SimpleScoringView: View {
             }
 
             TextField("", text: text)
-                .keyboardType(keyboardType)
+                .keyboardType(isNumberPad ? .numberPad : .default)
                 .font(.body)
                 .foregroundColor(Color.scorePrimary)
                 .textFieldStyle(.plain)

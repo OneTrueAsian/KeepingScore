@@ -18,15 +18,27 @@ struct LandingPageView: View {
     private let items: [GameItem] = [
         .init(
             title: "Simple Scoring",
-            subtitle: "Basic custom score tracker",
+            subtitle: "Basic score tracker",
             icon: "trophy.fill",
             isCustomImage: false
         ),
         .init(
             title: "Skull King",
-            subtitle: "Dedicated scorecard for Skull King",
+            subtitle: "Score Keeping For Skull King",
             icon: "skullking",
             isCustomImage: true
+        ),
+        .init(
+            title: "Tournament",
+            subtitle: "Run tournament events",
+            icon: "trophy.circle.fill",
+            isCustomImage: false
+        ),
+        .init(
+            title: "Monopoly",
+            subtitle: "Track cash, properties & trades",
+            icon: "dollarsign.circle.fill",
+            isCustomImage: false
         )
     ]
 
@@ -39,10 +51,6 @@ struct LandingPageView: View {
                         Text("Keeping Score!")
                             .font(.largeTitle.bold())
                             .foregroundColor(Color.scorePrimary)
-
-                        Text("Keep track of game scores with ease.")
-                            .font(.subheadline)
-                            .foregroundColor(Color.scorePrimary.opacity(0.8))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
@@ -79,8 +87,16 @@ struct LandingPageView: View {
         switch item.title {
         case "Simple Scoring":
             SimpleScoringView()
+
         case "Skull King":
             GameSetupView()
+
+        case "Tournament":
+            TournamentSetupView()
+
+        case "Monopoly":
+            MonopolySetupView()
+
         default:
             Text("Coming Soon")
         }
@@ -115,6 +131,7 @@ struct GameCardView: View {
                 Text(item.title)
                     .font(.headline)
                     .foregroundColor(Color.scorePrimary)
+
                 Text(item.subtitle)
                     .font(.footnote)
                     .foregroundColor(Color.scorePrimary.opacity(0.7))

@@ -1,4 +1,5 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
 
 // MARK: - Keyboard dismiss helper
@@ -7,6 +8,7 @@ extension UIApplication {
         sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
+#endif
 
 /// Skull King scoring screen:
 /// - Enter bid / tricks / bonus per player per round
@@ -61,7 +63,6 @@ struct ScoreInputAndScoreboardView: View {
             UIApplication.shared.endEditing()
         }
         .background(SkullKingTheme.backgroundGradient.ignoresSafeArea())
-        .navigationTitle("Skull King Scores")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: initializeArraysIfNeeded)
         .onChange(of: gameManager.players.count) { _, _ in

@@ -242,6 +242,9 @@
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				14F444582D60105200B4A57B /* KeepingScore */,
+			);
 			name = KeepScore;
 			packageProductDependencies = (
 			);
@@ -764,7 +767,7 @@
 		14F444DC2D603CEF00B4A57B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = KSIcon1;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -794,7 +797,7 @@
 		14F444DD2D603CEF00B4A57B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = KSIcon1;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;

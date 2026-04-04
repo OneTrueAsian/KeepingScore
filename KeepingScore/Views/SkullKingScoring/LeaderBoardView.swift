@@ -5,9 +5,12 @@ import SwiftUI
 /// Options provided to go back to setup or restart the game.
 struct LeaderboardView: View {
     @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var tournamentStore: TournamentStore
+    @Environment(\.dismiss) private var dismiss
     // Navigation triggers
     @State private var navigateBackToPlayerSetup = false
     @State private var navigateToScoreboard = false
+    @State private var showTieAlert = false
     private var sortedPlayers: [Player] {
         gameManager.players.sorted { $0.totalScore > $1.totalScore }
     }
@@ -48,6 +51,17 @@ struct LeaderboardView: View {
             }
             .navigationDestination(isPresented: $navigateToScoreboard) {
                 ScoreInputAndScoreboardView().environmentObject(gameManager)
+            }
+            .alert("It's a Tie!", isPresented: $showTieAlert) {
+                Button("OK") {
+                    if let context = gameManager.tournamentMatchContext {
+                        tournamentStore.tieMatchId = context.matchId
+                        gameManager.tournamentMatchContext = nil
+                    }
+                    // No dismiss — TournamentMatchDetailView pops its children and stays in the stack
+                }
+            } message: {
+                Text("Scores are equal — ties are not allowed. Another match is needed to determine the winner.")
             }
         }
     }
@@ -133,23 +147,60 @@ struct LeaderboardView: View {
     // MARK: - Actions
     private var actionButtons: some View {
         VStack(spacing: 10) {
-            Button {
-                // Play again with same players
-                gameManager.resetGame()
-                navigateToScoreboard = true
-            } label: {
-                Text("Play Again with Same Players")
+            if let context = gameManager.tournamentMatchContext {
+                Button {
+                    recordTournamentResult(context: context)
+                } label: {
+                    Text("Record Match Result & Return")
+                }
+                .buttonStyle(SkullKingPrimaryButtonStyle())
+            } else {
+                Button {
+                    // Play again with same players
+                    gameManager.resetGame()
+                    navigateToScoreboard = true
+                } label: {
+                    Text("Play Again with Same Players")
+                }
+                .buttonStyle(SkullKingPrimaryButtonStyle())
+                Button {
+                    // New game / change players
+                    gameManager.isGameStarted = false
+                    navigateBackToPlayerSetup = true
+                } label: {
+                    Text("New Game / Change Players")
+                }
+                .buttonStyle(SkullKingDestructiveButtonStyle())
             }
-            .buttonStyle(SkullKingPrimaryButtonStyle())
-            Button {
-                // New game / change players
-                gameManager.isGameStarted = false
-                navigateBackToPlayerSetup = true
-            } label: {
-                Text("New Game / Change Players")
-            }
-            .buttonStyle(SkullKingDestructiveButtonStyle())
         }
+    }
+
+    private func recordTournamentResult(context: TournamentMatchContext) {
+        // Tie check — top two players share the same score
+        if sortedPlayers.count >= 2 && sortedPlayers[0].totalScore == sortedPlayers[1].totalScore {
+            showTieAlert = true
+            return
+        }
+
+        guard let winner = sortedPlayers.first,
+              let winnerParticipantId = context.participantsByName[winner.name] else { return }
+
+        let scoresByParticipantId = Dictionary(
+            uniqueKeysWithValues: gameManager.players.compactMap { player -> (UUID, Int)? in
+                guard let pid = context.participantsByName[player.name] else { return nil }
+                return (pid, player.totalScore)
+            }
+        )
+
+        tournamentStore.recordMatchResult(
+            tournamentId: context.tournamentId,
+            matchId: context.matchId,
+            winnerParticipantId: winnerParticipantId,
+            scores: scoresByParticipantId
+        )
+
+        gameManager.tournamentMatchContext = nil
+        dismiss()
     }
 }
 
