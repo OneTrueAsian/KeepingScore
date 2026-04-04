@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 
+/// Final leaderboard row used by the Monopoly end-of-game summary.
 struct MonopolyLeaderboardEntry: Identifiable {
     let player: MonopolyPlayer
     let rank: Int
@@ -15,6 +16,10 @@ struct MonopolyLeaderboardEntry: Identifiable {
     var id: UUID { player.id }
 }
 
+/// Central source of truth for an in-progress Monopoly game.
+///
+/// This manager owns the board state, enforces the app's Monopoly rules, tracks
+/// transactions, and persists the active session to disk.
 @MainActor
 final class MonopolyGameManager: ObservableObject {
     private let maxHousesInBank = 32
@@ -34,6 +39,7 @@ final class MonopolyGameManager: ObservableObject {
 
     // MARK: - Game Lifecycle
 
+    /// Starts a fresh game with standard Monopoly properties and the chosen cash amount.
     func startGame(players: [MonopolyPlayer], startingCash: Int) {
         var adjustedPlayers = players
         for i in adjustedPlayers.indices {
@@ -280,6 +286,7 @@ final class MonopolyGameManager: ObservableObject {
 
     // MARK: - Computed Helpers
 
+    /// Returns the properties currently owned by the given player.
     func properties(for playerId: UUID) -> [MonopolyProperty] {
         properties.filter { $0.ownerId == playerId }
     }
@@ -288,11 +295,13 @@ final class MonopolyGameManager: ObservableObject {
         properties.filter { $0.ownerId == nil }
     }
 
+    /// Returns true when a player owns every property in a color group.
     func ownsMonopoly(playerId: UUID, colorGroup: PropertyColorGroup) -> Bool {
         let groupProps = properties.filter { $0.colorGroup == colorGroup }
         return groupProps.allSatisfy { $0.ownerId == playerId }
     }
 
+    /// Validates whether a house or hotel can legally be added to a property.
     func canAddHouse(to propertyId: UUID) -> Bool {
         guard let property = properties.first(where: { $0.id == propertyId }),
               property.colorGroup.canHaveHouses,
@@ -318,6 +327,7 @@ final class MonopolyGameManager: ObservableObject {
         return globalHousesInPlay < maxHousesInBank
     }
 
+    /// Validates whether one level of development can legally be sold back to the bank.
     func canRemoveHouse(from propertyId: UUID) -> Bool {
         guard let property = properties.first(where: { $0.id == propertyId }),
               property.colorGroup.canHaveHouses,
@@ -330,6 +340,7 @@ final class MonopolyGameManager: ObservableObject {
         return property.houses == highestDevelopment
     }
 
+    /// Validates whether a property can be mortgaged under the current board state.
     func canMortgage(_ propertyId: UUID) -> Bool {
         guard let property = properties.first(where: { $0.id == propertyId }),
               property.ownerId != nil,
@@ -364,10 +375,12 @@ final class MonopolyGameManager: ObservableObject {
         PropertyColorGroup.allCases.filter { ownsMonopoly(playerId: playerId, colorGroup: $0) }.count
     }
 
+    /// Players still active in the current game.
     var activePlayers: [MonopolyPlayer] {
         players.filter { !$0.isBankrupt }
     }
 
+    /// The winner exists once only one non-bankrupt player remains.
     var winner: MonopolyPlayer? {
         guard players.count > 1, activePlayers.count == 1 else { return nil }
         return activePlayers.first
@@ -397,6 +410,10 @@ final class MonopolyGameManager: ObservableObject {
         return player.cash + propertyValue
     }
 
+    /// Final standings for the summary screen.
+    ///
+    /// Placement is Monopoly-style: surviving winner first, then bankrupt
+    /// players from last eliminated to first eliminated.
     var leaderboard: [MonopolyLeaderboardEntry] {
         let sortedPlayers = players.sorted { lhs, rhs in
             if lhs.isBankrupt != rhs.isBankrupt {

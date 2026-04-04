@@ -97,7 +97,7 @@ struct SimpleScoringView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundColor(Color.scorePrimary)
 
-                    Text("Toggle to turn on indefinite rounds - play til you drop!")
+                    Text("Turn on indefinite rounds to keep scoring until you're done.")
                         .font(.caption)
                         .foregroundColor(Color.scorePrimary.opacity(0.75))
                 }

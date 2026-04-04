@@ -1,5 +1,9 @@
 import SwiftUI
-/// Manages the game state, player scores, round progression, and scoring logic for Skull King.
+
+/// Source of truth for a Skull King session.
+///
+/// It owns the player list, current round, game-over state, and round scoring
+/// calculation used by the Skull King views.
 class GameManager: ObservableObject {
     @Published var players: [Player] = []
     @Published var currentRound: Int = 1
@@ -46,6 +50,8 @@ class GameManager: ObservableObject {
             currentRound += 1
         }
     }
+
+    /// Resets scores and round state while keeping the same player roster.
     func resetGame() {
         DispatchQueue.main.async {
             for index in self.players.indices {
@@ -56,5 +62,4 @@ class GameManager: ObservableObject {
         }
     }
 }
-
 
