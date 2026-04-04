@@ -18,13 +18,13 @@ struct LandingPageView: View {
     private let items: [GameItem] = [
         .init(
             title: "Simple Scoring",
-            subtitle: "Basic custom score tracker",
+            subtitle: "Basic score tracker",
             icon: "trophy.fill",
             isCustomImage: false
         ),
         .init(
             title: "Skull King",
-            subtitle: "Dedicated scorecard for Skull King",
+            subtitle: "Score Keeping For Skull King",
             icon: "skullking",
             isCustomImage: true
         ),
@@ -32,7 +32,7 @@ struct LandingPageView: View {
         // NEW (Tournament entry point)
         .init(
             title: "Tournament",
-            subtitle: "Run multi-game events",
+            subtitle: "Run tournament events",
             icon: "trophy.circle.fill",
             isCustomImage: false
         )
@@ -47,10 +47,6 @@ struct LandingPageView: View {
                         Text("Keeping Score!")
                             .font(.largeTitle.bold())
                             .foregroundColor(Color.scorePrimary)
-
-                        Text("Keep track of game scores with ease.")
-                            .font(.subheadline)
-                            .foregroundColor(Color.scorePrimary.opacity(0.8))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
@@ -92,7 +88,7 @@ struct LandingPageView: View {
             GameSetupView()
 
         case "Tournament":
-            TournamentListView()
+            TournamentSetupView()
 
         default:
             Text("Coming Soon")

@@ -72,7 +72,6 @@ struct TournamentBracketView: View {
             }
         }
         .background(Color.scoreBackground.ignoresSafeArea())
-        .navigationTitle("Bracket")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             // Start on the latest round that has been generated
@@ -90,7 +89,7 @@ struct TournamentBracketView: View {
 
     private func header(round: Int) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Bracket (Round \(round))")
+            Text("Round \(round)")
                 .font(.largeTitle.bold())
                 .foregroundColor(Color.scorePrimary)
 

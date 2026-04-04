@@ -3,6 +3,7 @@ import SwiftUI
 struct TournamentListView: View {
     @EnvironmentObject private var tournamentStore: TournamentStore
     @State private var goToSetup = false
+    @State private var showDeleteAllConfirmation = false
 
     var body: some View {
         List {
@@ -50,16 +51,34 @@ struct TournamentListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    goToSetup = true
-                } label: {
-                    Image(systemName: "plus")
-                        .foregroundColor(Color.scorePrimary)
+                HStack(spacing: 16) {
+                    Button {
+                        showDeleteAllConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(tournamentStore.tournaments.isEmpty ? Color.scorePrimary.opacity(0.35) : Color.scoreDestructive)
+                    }
+                    .disabled(tournamentStore.tournaments.isEmpty)
+
+                    Button {
+                        goToSetup = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .foregroundColor(Color.scorePrimary)
+                    }
                 }
             }
         }
         .navigationDestination(isPresented: $goToSetup) {
             TournamentSetupView()
+        }
+        .alert("Delete All Tournament History?", isPresented: $showDeleteAllConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete All", role: .destructive) {
+                tournamentStore.deleteAll()
+            }
+        } message: {
+            Text("This will permanently remove every saved tournament from history.")
         }
     }
 

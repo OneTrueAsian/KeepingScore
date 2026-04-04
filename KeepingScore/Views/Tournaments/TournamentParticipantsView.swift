@@ -87,7 +87,7 @@ struct TournamentParticipantsView: View {
                 .font(.largeTitle.bold())
                 .foregroundColor(Color.scorePrimary)
 
-            Text("Add players for your tournament.")
+            Text("Add players to your tournament.")
                 .font(.subheadline)
                 .foregroundColor(Color.scorePrimary.opacity(0.8))
 

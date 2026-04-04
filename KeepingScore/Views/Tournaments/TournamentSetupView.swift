@@ -2,12 +2,12 @@ import SwiftUI
 
 struct TournamentSetupView: View {
     @EnvironmentObject private var store: TournamentStore
-    @Environment(\.dismiss) private var dismiss
 
     @State private var nameText: String = ""
     @State private var selectedFormat: TournamentFormat = .singleElimination
     @State private var participantCountText: String = "4"
     @State private var createdTournamentId: UUID? = nil
+    @State private var goToHistory: Bool = false
 
     private let minPlayers = 2
     private let maxPlayers = 32
@@ -138,6 +138,17 @@ struct TournamentSetupView: View {
         .background(Color.scoreBackground.ignoresSafeArea())
         .navigationTitle("Tournament")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("History") {
+                    goToHistory = true
+                }
+                .foregroundColor(Color.scorePrimary)
+            }
+        }
+        .navigationDestination(isPresented: $goToHistory) {
+            TournamentListView()
+        }
     }
 
     private func shortDate() -> String {
