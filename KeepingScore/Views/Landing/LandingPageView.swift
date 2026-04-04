@@ -28,12 +28,16 @@ struct LandingPageView: View {
             icon: "skullking",
             isCustomImage: true
         ),
-
-        // NEW (Tournament entry point)
         .init(
             title: "Tournament",
             subtitle: "Run tournament events",
             icon: "trophy.circle.fill",
+            isCustomImage: false
+        ),
+        .init(
+            title: "Monopoly",
+            subtitle: "Track cash, properties & trades",
+            icon: "dollarsign.circle.fill",
             isCustomImage: false
         )
     ]
@@ -89,6 +93,9 @@ struct LandingPageView: View {
 
         case "Tournament":
             TournamentSetupView()
+
+        case "Monopoly":
+            MonopolySetupView()
 
         default:
             Text("Coming Soon")
