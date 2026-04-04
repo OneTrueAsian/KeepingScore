@@ -37,8 +37,8 @@ struct LandingPageView: View {
         .init(
             title: "Monopoly",
             subtitle: "Track cash, properties, & trades",
-            icon: "dollarsign.circle.fill",
-            isCustomImage: false
+            icon: "monopoly",
+            isCustomImage: true
         )
     ]
 

@@ -338,10 +338,16 @@ struct MoneyInputSheet: View {
                                 .font(.system(size: 40, weight: .bold, design: .rounded))
                                 .foregroundColor(mode == .add ? MonopolyTheme.green : MonopolyTheme.red)
 
-                            TextField("Tap to enter amount", text: $amountText)
+                            TextField(
+                                "",
+                                text: $amountText,
+                                prompt: Text("Tap to enter an amount")
+                                    .foregroundColor(MonopolyTheme.textSecondary.opacity(0.75))
+                            )
                                 .keyboardType(.numberPad)
                                 .multilineTextAlignment(.center)
                                 .font(.title3)
+                                .foregroundColor(MonopolyTheme.textPrimary)
                                 .padding(12)
                                 .background(Color.white)
                                 .focused($isAmountFieldFocused)
@@ -421,8 +427,14 @@ struct MoneyInputSheet: View {
                                 .font(.caption)
                                 .foregroundColor(MonopolyTheme.textSecondary)
 
-                            TextField("e.g. Rent from Boardwalk", text: $label)
+                            TextField(
+                                "",
+                                text: $label,
+                                prompt: Text("e.g. Rent from Boardwalk")
+                                    .foregroundColor(MonopolyTheme.textSecondary.opacity(0.75))
+                            )
                                 .font(.body)
+                                .foregroundColor(MonopolyTheme.textPrimary)
                                 .padding(12)
                                 .background(Color.white)
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -515,10 +527,16 @@ struct TransferSheet: View {
                                 .font(.system(size: 40, weight: .bold, design: .rounded))
                                 .foregroundColor(MonopolyTheme.blue)
 
-                            TextField("Tap to enter amount", text: $amountText)
+                            TextField(
+                                "",
+                                text: $amountText,
+                                prompt: Text("Tap to enter an amount")
+                                    .foregroundColor(MonopolyTheme.textSecondary.opacity(0.75))
+                            )
                                 .keyboardType(.numberPad)
                                 .multilineTextAlignment(.center)
                                 .font(.title3)
+                                .foregroundColor(MonopolyTheme.textPrimary)
                                 .padding(12)
                                 .background(Color.white)
                                 .focused($isAmountFieldFocused)

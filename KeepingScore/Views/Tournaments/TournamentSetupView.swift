@@ -44,7 +44,12 @@ struct TournamentSetupView: View {
                         .font(.headline)
                         .foregroundColor(Color.scorePrimary)
 
-                    TextField("Tournament", text: $nameText)
+                    TextField(
+                        "",
+                        text: $nameText,
+                        prompt: Text("Tournament")
+                            .foregroundColor(Color.scorePrimary.opacity(0.55))
+                    )
                         .textInputAutocapitalization(.words)
                         .disableAutocorrection(true)
                         .padding()

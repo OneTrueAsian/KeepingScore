@@ -4,7 +4,7 @@ struct MonopolySetupView: View {
     @EnvironmentObject private var manager: MonopolyGameManager
     @Environment(\.dismiss) private var dismiss
 
-    @State private var playerNames: [String] = ["Player 1", "Player 2"]
+    @State private var playerNames: [String] = ["", ""]
     @State private var playerTokens: [String] = ["🎩", "🚂"]
     @State private var startingCash: Int = 1500
     @State private var showGame = false
@@ -12,6 +12,10 @@ struct MonopolySetupView: View {
     @State private var tokenPickerForIndex: Int = 0
 
     private let cashOptions = [1000, 1500, 2000, 2500, 3000]
+
+    private func defaultPlayerName(for index: Int) -> String {
+        "Player \(index + 1)"
+    }
 
     var body: some View {
         NavigationStack {
@@ -93,7 +97,7 @@ struct MonopolySetupView: View {
                             let nextToken = monopolyTokens.first {
                                 !playerTokens.contains($0)
                             } ?? "⭐"
-                            playerNames.append("Player \(playerNames.count + 1)")
+                            playerNames.append("")
                             playerTokens.append(nextToken)
                         } label: {
                             Image(systemName: "plus.circle.fill")
@@ -125,7 +129,12 @@ struct MonopolySetupView: View {
                             }
                             .buttonStyle(.plain)
 
-                            TextField("Player name", text: $playerNames[idx])
+                            TextField(
+                                "",
+                                text: $playerNames[idx],
+                                prompt: Text(defaultPlayerName(for: idx))
+                                    .foregroundColor(MonopolyTheme.textSecondary.opacity(0.75))
+                            )
                                 .font(.body)
                                 .foregroundColor(MonopolyTheme.textPrimary)
                                 .padding(.horizontal, 10)
@@ -162,9 +171,11 @@ struct MonopolySetupView: View {
 
     private var startButton: some View {
         Button {
-            let newPlayers = zip(playerNames, playerTokens).map { name, token in
-                MonopolyPlayer(
-                    name: name.isEmpty ? "Player" : name,
+            let newPlayers = zip(playerNames.indices, zip(playerNames, playerTokens)).map { index, pair in
+                let (name, token) = pair
+                let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                return MonopolyPlayer(
+                    name: trimmedName.isEmpty ? defaultPlayerName(for: index) : trimmedName,
                     token: token,
                     cash: startingCash
                 )
@@ -175,7 +186,7 @@ struct MonopolySetupView: View {
             Text("Start Game")
         }
         .buttonStyle(MonopolyGreenButtonStyle())
-        .disabled(playerNames.filter { !$0.isEmpty }.count < 2)
+        .disabled(playerNames.count < 2)
         .padding(.bottom, 32)
     }
 }
