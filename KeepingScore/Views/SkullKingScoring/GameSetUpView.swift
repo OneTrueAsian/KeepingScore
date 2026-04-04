@@ -164,7 +164,7 @@ struct GameSetupView: View {
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
         guard trimmed.count >= 2 else {
-            errorMessage = "You need at least 2 player names."
+            errorMessage = "You need at least two player names."
             showError = true
             return
         }
@@ -181,4 +181,3 @@ struct GameSetupView: View {
             .environmentObject(GameManager())
     }
 }
-

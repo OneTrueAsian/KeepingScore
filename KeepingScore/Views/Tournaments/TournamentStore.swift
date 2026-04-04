@@ -1,6 +1,10 @@
 import Foundation
 import SwiftUI
 
+/// Central source of truth for tournament data and bracket progression.
+///
+/// This store handles persistence, tournament creation, bracket generation, and
+/// match result recording for the tournament feature.
 @MainActor
 final class TournamentStore: ObservableObject {
     @Published private(set) var tournaments: [Tournament] = []
@@ -229,6 +233,7 @@ final class TournamentStore: ObservableObject {
         save()
     }
 
+    /// Builds the first round of a single-elimination bracket in seed order.
     private func generateRound1Matches(participantIds: [UUID]) -> [TournamentMatch] {
         var matches: [TournamentMatch] = []
         var matchNumber = 1
