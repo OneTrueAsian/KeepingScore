@@ -5,8 +5,12 @@ struct TournamentBracketView: View {
 
     let tournamentId: UUID?
 
-    @State private var tournament: Tournament?
     @State private var currentRound: Int = 1
+
+    private var tournament: Tournament? {
+        guard let tournamentId else { return nil }
+        return tournamentStore.tournament(id: tournamentId)
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -70,7 +74,18 @@ struct TournamentBracketView: View {
         .background(Color.scoreBackground.ignoresSafeArea())
         .navigationTitle("Bracket")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { loadTournament() }
+        .onAppear {
+            // Start on the latest round that has been generated
+            if let t = tournament {
+                currentRound = availableRounds(from: t.matches).last ?? 1
+            }
+        }
+        .onChange(of: tournament?.matches.count) { _, _ in
+            // Auto-advance to the newly generated round
+            if let t = tournament {
+                currentRound = availableRounds(from: t.matches).last ?? 1
+            }
+        }
     }
 
     private func header(round: Int) -> some View {
@@ -123,11 +138,5 @@ struct TournamentBracketView: View {
     private func availableRounds(from matches: [TournamentMatch]) -> [Int] {
         let set = Set(matches.map { $0.roundNumber })
         return Array(set).sorted()
-    }
-
-    private func loadTournament() {
-        guard let tournamentId else { return }
-        tournament = tournamentStore.tournament(id: tournamentId)
-        currentRound = 1
     }
 }

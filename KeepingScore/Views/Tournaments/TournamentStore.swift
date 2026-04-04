@@ -118,6 +118,67 @@ final class TournamentStore: ObservableObject {
         return match.scoringSessionId
     }
 
+    // MARK: - Record Match Result
+
+    func recordMatchResult(
+        tournamentId: UUID,
+        matchId: UUID,
+        winnerParticipantId: UUID,
+        scores: [UUID: Int]? = nil
+    ) {
+        guard let tIdx = tournaments.firstIndex(where: { $0.id == tournamentId }) else { return }
+        var t = tournaments[tIdx]
+        guard let mIdx = t.matches.firstIndex(where: { $0.id == matchId }) else { return }
+
+        var match = t.matches[mIdx]
+        match.result = TournamentMatchResult(winnerParticipantId: winnerParticipantId)
+        match.status = .completed
+        if let scores = scores {
+            match.finalScoresByParticipantId = scores
+        }
+        t.matches[mIdx] = match
+        advanceRoundIfNeeded(tournament: &t)
+        tournaments[tIdx] = t
+        save()
+    }
+
+    /// Checks if the current round is fully complete and, if so, generates the next round
+    /// or marks the tournament as finished (single winner).
+    private func advanceRoundIfNeeded(tournament: inout Tournament) {
+        let roundNumbers = Set(tournament.matches.map { $0.roundNumber }).sorted()
+        guard let currentRound = roundNumbers.last else { return }
+
+        let currentRoundMatches = tournament.matches.filter { $0.roundNumber == currentRound }
+        guard currentRoundMatches.allSatisfy({ $0.status == .completed }) else { return }
+
+        let winners: [UUID] = currentRoundMatches.compactMap { $0.winnerParticipantId }
+
+        if winners.count <= 1 {
+            // Final match done — mark tournament complete
+            tournament.winnerParticipantId = winners.first
+            tournament.status = .completed
+            return
+        }
+
+        // Generate next round
+        let nextRound = currentRound + 1
+        var matchNumber = 1
+        var i = 0
+        while i < winners.count {
+            let a = winners[i]
+            let b: UUID? = (i + 1 < winners.count) ? winners[i + 1] : nil
+            tournament.matches.append(TournamentMatch(
+                roundNumber: nextRound,
+                matchNumber: matchNumber,
+                playerAId: a,
+                playerBId: b,
+                status: .pending
+            ))
+            matchNumber += 1
+            i += 2
+        }
+    }
+
     // MARK: - Start Tournament / Bracket Generation (single elimination MVP)
 
     func startTournament(tournamentId: UUID) {

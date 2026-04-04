@@ -92,7 +92,7 @@ struct LandingPageView: View {
             GameSetupView()
 
         case "Tournament":
-            TournamentSetupView()
+            TournamentListView()
 
         default:
             Text("Coming Soon")

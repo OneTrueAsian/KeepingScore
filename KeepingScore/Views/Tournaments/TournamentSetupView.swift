@@ -7,6 +7,7 @@ struct TournamentSetupView: View {
     @State private var nameText: String = ""
     @State private var selectedFormat: TournamentFormat = .singleElimination
     @State private var expectedParticipantCount: Int = 4
+    @State private var createdTournamentId: UUID? = nil
 
     private let minPlayers = 2
     private let maxPlayers = 32
@@ -86,17 +87,29 @@ struct TournamentSetupView: View {
                     )
                 }
 
+                NavigationLink(
+                    destination: Group {
+                        if let id = createdTournamentId {
+                            TournamentParticipantsView(tournamentId: id)
+                        }
+                    },
+                    isActive: Binding(
+                        get: { createdTournamentId != nil },
+                        set: { if !$0 { createdTournamentId = nil } }
+                    )
+                ) { EmptyView() }
+                .hidden()
+
                 Button {
                     let trimmed = nameText.trimmingCharacters(in: .whitespacesAndNewlines)
-
-                    // ✅ Always non-optional String (fixes the compiler error)
                     let nameToSave: String = trimmed.isEmpty ? "Tournament \(shortDate())" : trimmed
 
-                    store.createTournament(
+                    let tournament = store.createTournament(
                         name: nameToSave,
                         format: selectedFormat,
                         expectedParticipantCount: expectedParticipantCount
                     )
+                    createdTournamentId = tournament.id
                 } label: {
                     Text("Continue")
                         .font(.headline)

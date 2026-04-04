@@ -6,6 +6,9 @@ struct ScoringView: View {
     // Input
     let players: [String]
     let totalRounds: Int   // -1 means indefinite rounds
+    var tournamentContext: TournamentMatchContext? = nil
+
+    @EnvironmentObject private var tournamentStore: TournamentStore
 
     // Score tracking
     @State private var scores: [String: Int] = [:]
@@ -216,6 +219,22 @@ struct ScoringView: View {
         } else {
             if currentRound >= totalRounds {
                 lastRoundSubmitted = true
+                if let context = tournamentContext,
+                   let winnerName = players.max(by: { scores[$0, default: 0] < scores[$1, default: 0] }),
+                   let winnerParticipantId = context.participantsByName[winnerName] {
+                    let scoresByParticipantId = Dictionary(
+                        uniqueKeysWithValues: players.compactMap { name -> (UUID, Int)? in
+                            guard let pid = context.participantsByName[name] else { return nil }
+                            return (pid, scores[name, default: 0])
+                        }
+                    )
+                    tournamentStore.recordMatchResult(
+                        tournamentId: context.tournamentId,
+                        matchId: context.matchId,
+                        winnerParticipantId: winnerParticipantId,
+                        scores: scoresByParticipantId
+                    )
+                }
                 showCompletionAlert = true
             } else {
                 currentRound += 1

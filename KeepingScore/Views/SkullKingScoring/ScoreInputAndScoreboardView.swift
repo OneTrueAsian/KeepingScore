@@ -1,4 +1,5 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
 
 // MARK: - Keyboard dismiss helper
@@ -7,6 +8,7 @@ extension UIApplication {
         sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
+#endif
 
 /// Skull King scoring screen:
 /// - Enter bid / tricks / bonus per player per round

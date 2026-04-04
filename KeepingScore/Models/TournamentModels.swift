@@ -1,6 +1,16 @@
 import Foundation
+import SwiftUI
 
-// MARK: - TournamentGameType (used by Match Detail + bracket)
+// MARK: - TournamentMatchContext
+// In-memory only (not persisted). Passed into scoring views when launched from a tournament match.
+struct TournamentMatchContext {
+    let tournamentId: UUID
+    let matchId: UUID
+    /// Maps each player's display name to their tournament participant UUID.
+    let participantsByName: [String: UUID]
+}
+
+// MARK: - TournamentGameType
 
 enum TournamentGameType: String, Codable, CaseIterable, Identifiable, Equatable {
     case simpleScoring

@@ -1,8 +1,15 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// SimpleScoringView
 /// Lets users configure a simple game: total rounds (or indefinite) and players.
 struct SimpleScoringView: View {
+    // MARK: Tournament context (optional — only set when launched from a tournament match)
+    var preloadedPlayers: [String] = []
+    var tournamentContext: TournamentMatchContext? = nil
+
     // MARK: State
     @State private var players: [String] = []
     @State private var newPlayer: String = ""
@@ -37,10 +44,16 @@ struct SimpleScoringView: View {
         } message: {
             Text("Enter how many rounds you want to play, or turn on 'Indefinite' to just keep scoring until you stop.")
         }
+        .onAppear {
+            if !preloadedPlayers.isEmpty && players.isEmpty {
+                players = preloadedPlayers
+            }
+        }
         .navigationDestination(isPresented: $navigateToScoring) {
             ScoringView(
                 players: players,
-                totalRounds: isIndefiniteRounds ? -1 : (Int(numberOfRounds) ?? 0)
+                totalRounds: isIndefiniteRounds ? -1 : (Int(numberOfRounds) ?? 0),
+                tournamentContext: tournamentContext
             )
         }
     }
@@ -102,7 +115,7 @@ struct SimpleScoringView: View {
                 styledTextField(
                     placeholder: "Number of rounds",
                     text: $numberOfRounds,
-                    keyboardType: .numberPad
+                    isNumberPad: true
                 )
             }
         }
@@ -126,7 +139,7 @@ struct SimpleScoringView: View {
                 styledTextField(
                     placeholder: "Enter player name",
                     text: $newPlayer,
-                    keyboardType: .default
+                    isNumberPad: false
                 )
 
                 Button {
@@ -185,7 +198,7 @@ struct SimpleScoringView: View {
     private func styledTextField(
         placeholder: String,
         text: Binding<String>,
-        keyboardType: UIKeyboardType
+        isNumberPad: Bool
     ) -> some View {
         ZStack(alignment: .leading) {
             if text.wrappedValue.isEmpty {
@@ -196,7 +209,7 @@ struct SimpleScoringView: View {
             }
 
             TextField("", text: text)
-                .keyboardType(keyboardType)
+                .keyboardType(isNumberPad ? .numberPad : .default)
                 .font(.body)
                 .foregroundColor(Color.scorePrimary)
                 .textFieldStyle(.plain)

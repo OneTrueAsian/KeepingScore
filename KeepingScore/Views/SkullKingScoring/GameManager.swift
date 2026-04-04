@@ -6,6 +6,8 @@ class GameManager: ObservableObject {
     @Published var maxRounds: Int = 10
     @Published var isGameStarted: Bool = false
     @Published var isGameOver: Bool = false
+    /// Set when Skull King is launched from a tournament match. Cleared after result is recorded.
+    var tournamentMatchContext: TournamentMatchContext? = nil
     /// Calculates a player's score for a round.
     func calculateScore(bid: Int, tricksWon: Int, bonus: Int) -> Int {
         var score = 0

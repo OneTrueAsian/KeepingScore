@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TournamentMatchDetailView: View {
     @EnvironmentObject private var tournamentStore: TournamentStore
+    @EnvironmentObject private var gameManager: GameManager
 
     let tournamentId: UUID
     let matchId: UUID
@@ -65,12 +66,34 @@ struct TournamentMatchDetailView: View {
                 .padding(.horizontal)
 
                 Button {
-                    // ✅ Persist immediately (subtask support)
                     _ = tournamentStore.setScoringContext(
                         tournamentId: tournamentId,
                         matchId: matchId,
                         gameType: selectedGameType
                     )
+
+                    if let tournament = tournamentStore.tournament(id: tournamentId),
+                       let match = tournament.matches.first(where: { $0.id == matchId }),
+                       let aId = match.playerAId,
+                       let bId = match.playerBId {
+
+                        let aName = tournament.participants.first(where: { $0.id == aId })?.displayName ?? "Player A"
+                        let bName = tournament.participants.first(where: { $0.id == bId })?.displayName ?? "Player B"
+
+                        let context = TournamentMatchContext(
+                            tournamentId: tournamentId,
+                            matchId: matchId,
+                            participantsByName: [aName: aId, bName: bId]
+                        )
+
+                        if selectedGameType == .skullKing {
+                            gameManager.players = [Player(name: aName), Player(name: bName)]
+                            gameManager.currentRound = 1
+                            gameManager.isGameStarted = true
+                            gameManager.isGameOver = false
+                            gameManager.tournamentMatchContext = context
+                        }
+                    }
 
                     goToScoring = true
                 } label: {
@@ -103,11 +126,30 @@ struct TournamentMatchDetailView: View {
 
     @ViewBuilder
     private func scoringDestination() -> some View {
-        switch selectedGameType {
-        case .simpleScoring:
-            SimpleScoringView()
-        case .skullKing:
-            GameSetupView()
+        if let tournament = tournamentStore.tournament(id: tournamentId),
+           let match = tournament.matches.first(where: { $0.id == matchId }),
+           let aId = match.playerAId,
+           let bId = match.playerBId {
+
+            let aName = tournament.participants.first(where: { $0.id == aId })?.displayName ?? "Player A"
+            let bName = tournament.participants.first(where: { $0.id == bId })?.displayName ?? "Player B"
+            let context = TournamentMatchContext(
+                tournamentId: tournamentId,
+                matchId: matchId,
+                participantsByName: [aName: aId, bName: bId]
+            )
+
+            switch selectedGameType {
+            case .simpleScoring:
+                SimpleScoringView(
+                    preloadedPlayers: [aName, bName],
+                    tournamentContext: context
+                )
+            case .skullKing:
+                ScoreInputAndScoreboardView()
+            }
+        } else {
+            Text("Unable to load match.").foregroundColor(Color.scorePrimary)
         }
     }
 

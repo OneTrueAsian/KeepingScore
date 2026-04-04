@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TournamentListView: View {
     @EnvironmentObject private var tournamentStore: TournamentStore
+    @State private var goToSetup = false
 
     var body: some View {
         List {
@@ -11,7 +12,7 @@ struct TournamentListView: View {
                         .font(.headline)
                         .foregroundColor(Color.scorePrimary.opacity(0.7))
 
-                    Text("Create one to get started")
+                    Text("Tap + to create one")
                         .font(.footnote)
                         .foregroundColor(Color.scorePrimary.opacity(0.5))
                 }
@@ -20,16 +21,18 @@ struct TournamentListView: View {
                 .listRowBackground(Color.clear)
             } else {
                 ForEach(tournamentStore.tournaments) { tournament in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(tournament.name)
-                            .font(.headline)
-                            .foregroundColor(Color.scorePrimary)
+                    NavigationLink(destination: destination(for: tournament)) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(tournament.name)
+                                .font(.headline)
+                                .foregroundColor(Color.scorePrimary)
 
-                        Text(tournament.status.rawValue.capitalized)
-                            .font(.caption)
-                            .foregroundColor(Color.scorePrimary.opacity(0.7))
+                            Text(tournament.status.rawValue.capitalized)
+                                .font(.caption)
+                                .foregroundColor(Color.scorePrimary.opacity(0.7))
+                        }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
                     .listRowBackground(Color.clear)
                 }
                 .onDelete { indexSet in
@@ -41,10 +44,33 @@ struct TournamentListView: View {
             }
         }
         .listStyle(.plain)
-        .scrollContentBackground(.hidden)   // ⬅️ critical
-        .background(Color.scoreBackground)  // ⬅️ critical
+        .scrollContentBackground(.hidden)
+        .background(Color.scoreBackground)
         .navigationTitle("Tournaments")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    goToSetup = true
+                } label: {
+                    Image(systemName: "plus")
+                        .foregroundColor(Color.scorePrimary)
+                }
+            }
+        }
+        .navigationDestination(isPresented: $goToSetup) {
+            TournamentSetupView()
+        }
+    }
+
+    @ViewBuilder
+    private func destination(for tournament: Tournament) -> some View {
+        switch tournament.status {
+        case .draft:
+            TournamentParticipantsView(tournamentId: tournament.id)
+        case .active, .completed:
+            TournamentBracketView(tournamentId: tournament.id)
+        }
     }
 }
 
