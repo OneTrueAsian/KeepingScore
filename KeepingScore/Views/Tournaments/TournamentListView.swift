@@ -13,7 +13,7 @@ struct TournamentListView: View {
                         .font(.headline)
                         .foregroundColor(Color.scorePrimary.opacity(0.7))
 
-                    Text("Tap + to create one")
+                    Text("Tap + to create a tournament.")
                         .font(.footnote)
                         .foregroundColor(Color.scorePrimary.opacity(0.5))
                 }

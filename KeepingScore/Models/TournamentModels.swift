@@ -2,7 +2,11 @@ import Foundation
 import SwiftUI
 
 // MARK: - TournamentMatchContext
-// In-memory only (not persisted). Passed into scoring views when launched from a tournament match.
+
+/// In-memory context passed into a scoring screen when it is launched from a tournament match.
+///
+/// This is not persisted. It exists only to bridge a live tournament match to a
+/// game-specific scoring flow.
 struct TournamentMatchContext {
     let tournamentId: UUID
     let matchId: UUID
@@ -12,6 +16,7 @@ struct TournamentMatchContext {
 
 // MARK: - TournamentGameType
 
+/// Game modes that can be used to score a tournament match.
 enum TournamentGameType: String, Codable, CaseIterable, Identifiable, Equatable {
     case simpleScoring
     case skullKing
@@ -28,6 +33,7 @@ enum TournamentGameType: String, Codable, CaseIterable, Identifiable, Equatable 
 
 // MARK: - Tournament
 
+/// Persisted representation of a tournament and its bracket state.
 struct Tournament: Identifiable, Codable, Equatable {
     let id: UUID
     var name: String
@@ -122,6 +128,7 @@ enum TournamentFormat: String, Codable, CaseIterable, Identifiable {
 
 // MARK: - Participants
 
+/// A single tournament entrant.
 struct TournamentParticipant: Identifiable, Codable, Equatable {
     let id: UUID
     var displayName: String
@@ -137,6 +144,7 @@ struct TournamentParticipant: Identifiable, Codable, Equatable {
 
 // MARK: - Matches / Results
 
+/// A single bracket match, including its position in the bracket and any saved result.
 struct TournamentMatch: Identifiable, Codable, Equatable {
     let id: UUID
     var roundNumber: Int

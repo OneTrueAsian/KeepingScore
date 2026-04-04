@@ -24,19 +24,19 @@ struct LandingPageView: View {
         ),
         .init(
             title: "Skull King",
-            subtitle: "Score Keeping For Skull King",
+            subtitle: "Scorekeeping for Skull King",
             icon: "skullking",
             isCustomImage: true
         ),
         .init(
             title: "Tournament",
-            subtitle: "Run tournament events",
+            subtitle: "Run tournament and events",
             icon: "trophy.circle.fill",
             isCustomImage: false
         ),
         .init(
             title: "Monopoly",
-            subtitle: "Track cash, properties & trades",
+            subtitle: "Track cash, properties, & trades",
             icon: "dollarsign.circle.fill",
             isCustomImage: false
         )
